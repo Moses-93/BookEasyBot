@@ -16,9 +16,12 @@ class AdminReplyKeyboard(BaseReplyKeyboard):
                 [
                     KeyboardButton(text="Дати"),
                     KeyboardButton(text="Години"),
-                    KeyboardButton(text="Послуги"),
+                    KeyboardButton(text="Керувати послугами"),
                 ],
-                [KeyboardButton(text="Контакти"), KeyboardButton(text="Записи")],
+                [
+                    KeyboardButton(text="Керувати контактами"),
+                    KeyboardButton(text="Записи"),
+                ],
             ]
         )
 
@@ -102,11 +105,11 @@ class AdminInlineKeyboard(BaseInlineKeyboard):
                     )
                 ]
             )
-        return self.create_inline_keyboard(buttons=keyboard)
+        return self.create_inline_keyboard(keyboard=keyboard)
 
     def description_or_google_link_or_confirm(self):
         return self.create_inline_keyboard(
-            buttons=[
+            keyboard=[
                 [
                     InlineKeyboardButton(
                         text="Додати опис", callback_data="add_description"
