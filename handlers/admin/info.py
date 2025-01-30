@@ -111,88 +111,66 @@ async def set_phone(message: Message, state: FSMContext):
 @router.message(CreateBusinessInfoState.working_hours)
 async def set_working_hours(message: Message, state: FSMContext):
     await state.update_data(working_hours=message.text)
-    await message.answer(
-        text="Вказаної вами інформації вже достатньо!\nЗа бажанням ви можете додати додатковий опис або посилання в Google Maps на місцезнаходження вашого салону!\nЯкщо вам достатньо вже вказаної інформації - натисність відповідну кнопку",
-        reply_markup=inline_keyboard.description_or_google_link_or_confirm(),
-    )
-    return
+    await send_skip_message(message, state, CreateBusinessInfoState.google_link)
 
 
-@router.callback_query(F.data == "add_description")
-async def start_set_description(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer(text="Введіть додатковий опис вашого салону!")
-    await state.set_state(CreateBusinessInfoState.description)
-    return
-
-
-@router.callback_query(F.data == "add_google_link")
-async def set_link(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer(
-        text="Введіть посилання в Google Maps місцезнаходження вашого салону!"
-    )
-    await state.set_state(CreateBusinessInfoState.google_link)
-    return
-
-
-@router.callback_query(F.data == "confirm")
-async def create_info(callback: CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    try:
-        response = await api_client.post(
-            endpoint="/business-info/", chat_id=callback.from_user.id, json=data
-        )
-        if response.status == 201:
-            await callback.message.answer(text="Контактна інформація успішно додана!")
-            await state.clear()
-            return
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        await callback.message.answer(f"Помилка при збереженні даних: {str(e)}")
-        await state.clear()
-    return
+@router.message(CreateBusinessInfoState.google_link)
+async def set_google_link(message: Message, state: FSMContext):
+    await state.update_data(google_maps_link=message.text)
+    await send_skip_message(message, state, CreateBusinessInfoState.description)
 
 
 @router.message(CreateBusinessInfoState.description)
 async def set_description(message: Message, state: FSMContext):
     await state.update_data(description=message.text)
-    data = await state.get_data()
-    if not data.get("google_link"):
-        await message.answer(
-            text="Опис прийнято! Завершіть додавання даних або додайте посилання Google Maps!",
-            reply_markup=dynamic_keyboard.dynamic_reply_keyboard({"Додати посилання Google Maps":"add_google_link", "Підтвердити":"confirm"})
-        )
-        await state.set_state(CreateBusinessInfoState.google_link)
-        return
-    await message.answer(
-        text="Ви успішно додали контактні дані!"
-    )  # TODO: інітація запиту до бекенду
-    return
+    await send_skip_message(message, state, CreateBusinessInfoState.telegram_link)
 
 
-@router.message(CreateBusinessInfoState.google_link)
-async def set_link(message: Message, state: FSMContext):
-    await state.update_data(google_link=message.text)
+@router.message(CreateBusinessInfoState.telegram_link)
+async def set_telegram_link(message: Message, state: FSMContext):
+    await state.update_data(telegram_link=message.text)
+    await send_skip_message(message, state, CreateBusinessInfoState.instagram_link)
+
+
+@router.message(CreateBusinessInfoState.instagram_link)
+async def set_instagram_link(message: Message, state: FSMContext):
+    await state.update_data(instagram_link=message.text)
     data = await state.get_data()
-    if not data.get("description"):
-        await message.answer(
-            text="Посилання прийнято!\nЗавершіть додавання даних або додайте опис!",
-            reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="Додати опис",
-                            callback_data="add_description",
-                        )
-                    ],
-                    [InlineKeyboardButton(text="Завершити", callback_data="confirm")],
-                ]
-            ),
-        )
-        await state.set_state(CreateBusinessInfoState.description)
-        return
-    await message.answer(text="Ви успішно додали контактні дані!")
+    status, msg = await api_client.post(
+        endpoint="/business-info/", chat_id=message.from_user.id, json=data
+    )
+    if status == 201:
+        await message.answer(MESSAGES["info_created"])
+    else:
+        await message.answer(text=MESSAGES["api_error"].format(error=str(msg)))
     await state.clear()
-    return
+
+
+@router.callback_query(F.data.startswith("skip_"))
+async def handle_skip(callback: CallbackQuery, state: FSMContext):
+    num = callback.data.split("_")[1]
+    skip_handlers = {
+        "1": CreateBusinessInfoState.description,
+        "2": CreateBusinessInfoState.telegram_link,
+        "3": CreateBusinessInfoState.instagram_link,
+        "4": None,
+    }
+    next_state = skip_handlers.get(num)
+    if next_state:
+        await send_skip_message(callback.message, state, next_state)
+    elif num == "4":
+        data = await state.get_data()
+        status, msg = await api_client.post(
+            endpoint="/business-info/", chat_id=callback.from_user.id, json=data
+        )
+        if status == 201:
+            await callback.message.answer(MESSAGES["info_created"])
+        else:
+            await callback.message.answer(
+                text=MESSAGES["api_error"].format(error=str(msg))
+            )
+        await state.clear()
+    await callback.answer()
 
 
 @router.callback_query(UpdateBusinessInfoState.field)
@@ -210,7 +188,7 @@ async def update_field_value(message: Message, state: FSMContext):
     field = data.get("field")
     new_value = message.text
     try:
-        response = await api_client.patch(
+        status, msg = await api_client.patch(
             endpoint=f"/business-info/{field}/",
             chat_id=message.from_user.id,
             json={field: new_value},
