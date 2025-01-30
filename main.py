@@ -6,7 +6,7 @@ import logging
 from aiogram import Bot, Dispatcher
 
 from handlers.user import user, booking, feedback
-from handlers.admin import time, start as admin_start, date, info, admin
+from handlers.admin import time, start as admin_start, date, info, admin, service
 from handlers import general
 from core.dependencies import settings
 from core.middleware import UserIDMiddleware
@@ -41,6 +41,7 @@ async def main():
     dp.include_router(info.router)
     dp.include_router(admin.router)
     dp.include_router(feedback.router)
+    dp.include_router(service.router)
 
     await dp.start_polling(bot)
 
