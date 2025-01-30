@@ -75,7 +75,9 @@ async def start_edit_info(message: Message, state: FSMContext):
             "Номер телефону": "phone",
             "Графік роботи": "working_hours",
             "Опис": "description",
-            "Google Maps": "google_maps_url",
+            "Google Maps": "google_maps_link",
+            "Instagram": "instagram_link",
+            "Telegram": "telegram_link",
         }
     )
     await message.answer(text=MESSAGES["edit_info"], reply_markup=keyboard)
