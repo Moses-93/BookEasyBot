@@ -34,7 +34,12 @@ async def start_booking(message: Message, state: FSMContext):
 async def my_bookings(message: Message):
     await message.answer(
         text="Оберіть потрібну вам категрію",
-        reply_markup=dynamic_keyboard.dynamic_inline_keyboard(button_names={"Всі записи":"all_bookings", "Активні записи":"active_bookings"}),
+        reply_markup=dynamic_keyboard.dynamic_inline_keyboard(
+            button_names={
+                "Всі записи": "all_bookings",
+                "Активні записи": "active_bookings",
+            }
+        ),
     )
     return
 

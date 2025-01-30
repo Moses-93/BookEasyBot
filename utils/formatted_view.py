@@ -23,11 +23,7 @@ def format_date(data: List[Dict]):
 
     formatted = f"📅 *ДОСТУПНІ ДАТИ*\n\n"
     for item in sorted_data(data):
-        formatted += (
-            f"*{item.get("date")}*\n"
-            f"{'-' * 30}\n"
-
-        )
+        formatted += f"*{item.get("date")}*\n" f"{'-' * 30}\n"
 
     return formatted
 
@@ -37,10 +33,7 @@ def format_time(data: List[Dict]):
 
     formatted = f"⏰ *ДОСТУПНІ ГОДИНИ*\n\n"
     for item in sorted_data(data):
-        formatted += (
-            f"*{item.get("time")}*\n"
-            f"{'-' * 30}\n"
-        )
+        formatted += f"*{item.get("time")}*\n" f"{'-' * 30}\n"
     return formatted
 
 
@@ -65,9 +58,7 @@ def format_admin(data: List[Dict]):
     formatted = f"⏰ *АДМІНІСТРАТОРИ*\n\n"
     for item in sorted_data(data):
         formatted += (
-            f"👤 *{item.get("name")}*\n" 
-            f"🆔 *{item.get("chat_id")}*\n" 
-            f"{'-' * 30}\n"
+            f"👤 *{item.get("name")}*\n" f"🆔 *{item.get("chat_id")}*\n" f"{'-' * 30}\n"
         )
     return formatted
 

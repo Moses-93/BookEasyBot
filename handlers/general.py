@@ -19,37 +19,43 @@ router = Router()
 
 
 @router.message(F.text == "Контакти")
-async def contact_info(message: Message, state:FSMContext):
+async def contact_info(message: Message, state: FSMContext):
     status, data = await api_client.get(
         endpoint="/business-info/", chat_id=message.from_user.id
     )
     if status == 409:
         logger.warning("В користувача виявлено кілька майстрів")
-        await message.answer(text="У вас виявлено декілька майстрів!\nОберіть потрібного!", reply_markup=booking_keyboard.choice_master(data))
+        await message.answer(
+            text="У вас виявлено декілька майстрів!\nОберіть потрібного!",
+            reply_markup=booking_keyboard.choice_master(data),
+        )
         await state.set_state(business_info.ChoiceMasterState.master)
         return
-    
+
     elif status == 404:
-        await message.answer(text="Контактна інформація відсутня!\nЗверніться будь ласка до свого майстра")
-        return
-    
-    elif status == 200:
         await message.answer(
-            text=format_business_info(data), parse_mode="Markdown"
+            text="Контактна інформація відсутня!\nЗверніться будь ласка до свого майстра"
         )
+        return
+
+    elif status == 200:
+        await message.answer(text=format_business_info(data), parse_mode="Markdown")
         return
 
 
 @router.message(F.text == "Доступні послуги")
-async def start_booking(message: Message, state:FSMContext):
+async def start_booking(message: Message, state: FSMContext):
     user_id = message.from_user.id
     status, data = await api_client.get(endpoint="/services/", chat_id=user_id)
     if status == 409:
         logger.warning("В користувача виявлено кілька майстрів")
-        await message.answer(text="У вас виявлено декілька майстрів!\nОберіть потрібного!", reply_markup=booking_keyboard.choice_master(data))
+        await message.answer(
+            text="У вас виявлено декілька майстрів!\nОберіть потрібного!",
+            reply_markup=booking_keyboard.choice_master(data),
+        )
         await state.set_state(service.ChoiceMasterState.master)
         return
-    
+
     elif status == 404:
         await message.answer(text="Доступних послуг поки немає")
         return
@@ -64,19 +70,24 @@ async def start_booking(message: Message, state:FSMContext):
 
 
 @router.message(F.text == "Доступні дати")
-async def show_date(message: Message,state:FSMContext):
-    status, data = await api_client.get(endpoint="/dates/", chat_id=message.from_user.id)
-    
+async def show_date(message: Message, state: FSMContext):
+    status, data = await api_client.get(
+        endpoint="/dates/", chat_id=message.from_user.id
+    )
+
     if status == 409:
         logger.warning("В користувача виявлено кілька майстрів")
-        await message.answer(text="У вас виявлено декілька майстрів!\nОберіть потрібного!", reply_markup=booking_keyboard.choice_master(data))
+        await message.answer(
+            text="У вас виявлено декілька майстрів!\nОберіть потрібного!",
+            reply_markup=booking_keyboard.choice_master(data),
+        )
         await state.set_state(date.ChoiceMasterDate.master)
         return
-    
+
     elif status == 404:
         await message.answer(text="Доступних дат поки немає")
         return
-    
+
     elif status == 200:
         await message.answer(text=str(format_date(data)), parse_mode="Markdown")
         return
@@ -84,12 +95,16 @@ async def show_date(message: Message,state:FSMContext):
         message.answer(text="Сталася невідома помилка! Спробуйте будь ласка пізніше")
         return
 
+
 @router.message(F.text == "Доступний час")
 async def start_show_time(message: Message, state: FSMContext):
     status, data = await api_client.get(endpoint="/dates", chat_id=message.from_user.id)
     if status == 409:
         logger.warning("В користувача виявлено кілька майстрів")
-        await message.answer(text="У вас виявлено декілька майстрів!\nОберіть потрібного!", reply_markup=booking_keyboard.choice_master(data))
+        await message.answer(
+            text="У вас виявлено декілька майстрів!\nОберіть потрібного!",
+            reply_markup=booking_keyboard.choice_master(data),
+        )
         await state.set_state(time.ChoiceMasterTime.master)
         return
     await message.answer(
@@ -101,17 +116,20 @@ async def start_show_time(message: Message, state: FSMContext):
 
 
 @router.callback_query(time.ChoiceMasterTime.master)
-async def choice_master_for_time(callback:CallbackQuery, state:FSMContext):
+async def choice_master_for_time(callback: CallbackQuery, state: FSMContext):
     logger.info("Starting choice master for time")
     master_id = callback.data
-    
-    status, dates = await api_client.get(f"/dates?master_id={master_id}", callback.from_user.id)
+
+    status, dates = await api_client.get(
+        f"/dates?master_id={master_id}", callback.from_user.id
+    )
     if status == 200:
         await state.set_state(time.ShowTimeStates.date)
         await state.update_data(master_id=master_id)
         await callback.message.answer(
-        text="Оберіть дату, в якій бажаєте переглянути доступний час!",
-        reply_markup=booking_keyboard.date_keyboard(dates))
+            text="Оберіть дату, в якій бажаєте переглянути доступний час!",
+            reply_markup=booking_keyboard.date_keyboard(dates),
+        )
         await callback.answer()
         return
     elif status == 404:
@@ -119,7 +137,9 @@ async def choice_master_for_time(callback:CallbackQuery, state:FSMContext):
         await callback.answer()
         return
     else:
-        await callback.message.answer("Сталася невідома помилка! Спробуйте будь ласка пізніше!")
+        await callback.message.answer(
+            "Сталася невідома помилка! Спробуйте будь ласка пізніше!"
+        )
         await callback.answer()
         return
 
@@ -130,33 +150,42 @@ async def select_date(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     logger.info(f"Data:{data}")
     status, times = await api_client.get(
-        endpoint=f"/times?date_id={date_id}&master_id={data.get("master_id")}", chat_id=callback.from_user.id
+        endpoint=f"/times?date_id={date_id}&master_id={data.get("master_id")}",
+        chat_id=callback.from_user.id,
     )
     if status == 200:
-        await callback.message.answer(text=str(format_time(times)), parse_mode="Markdown")
+        await callback.message.answer(
+            text=str(format_time(times)), parse_mode="Markdown"
+        )
         await callback.answer()
         await state.clear()
         return
-    
+
     elif status == 404:
         await callback.message.answer(text="На жаль, доступного часу поки немає!")
         await callback.answer()
         await state.clear()
         return
-    
-    else: 
-        await callback.message.answer("Сталася невідома помилка! Спробуйте будь ласка пізніше!")
+
+    else:
+        await callback.message.answer(
+            "Сталася невідома помилка! Спробуйте будь ласка пізніше!"
+        )
         await callback.answer()
         return
 
 
 @router.callback_query(service.ChoiceMasterState.master)
-async def choice_master_for_service(callback:CallbackQuery):
+async def choice_master_for_service(callback: CallbackQuery):
     logger.info("Starting choice master for service")
     master_id = callback.data
-    status, services = await api_client.get(f"/services?master_id={master_id}", callback.from_user.id)
+    status, services = await api_client.get(
+        f"/services?master_id={master_id}", callback.from_user.id
+    )
     if status == 200:
-        await callback.message.answer(text=str(format_service(services)), parse_mode="Markdown")
+        await callback.message.answer(
+            text=str(format_service(services)), parse_mode="Markdown"
+        )
         await callback.answer()
         return
     elif status == 404:
@@ -164,36 +193,50 @@ async def choice_master_for_service(callback:CallbackQuery):
         await callback.answer()
         return
     else:
-        await callback.message.answer("Сталася невідома помилка! Спробуйте будь ласка пізніше!")
+        await callback.message.answer(
+            "Сталася невідома помилка! Спробуйте будь ласка пізніше!"
+        )
         await callback.answer()
         return
 
 
 @router.callback_query(business_info.ChoiceMasterState.master)
-async def choice_master_for_business_info(callback:CallbackQuery):
+async def choice_master_for_business_info(callback: CallbackQuery):
     logger.info("Starting choice master for business info")
     master_id = callback.data
-    status, services = await api_client.get(f"/business-info?master_id={master_id}", callback.from_user.id)
+    status, services = await api_client.get(
+        f"/business-info?master_id={master_id}", callback.from_user.id
+    )
     if status == 200:
-        await callback.message.answer(text=str(format_business_info(services)), parse_mode="Markdown")
+        await callback.message.answer(
+            text=str(format_business_info(services)), parse_mode="Markdown"
+        )
         await callback.answer()
         return
     elif status == 404:
-        await callback.message.answer(text="Контактна інформація відсутня!\nЗверніться будь ласка до свого майстра")
+        await callback.message.answer(
+            text="Контактна інформація відсутня!\nЗверніться будь ласка до свого майстра"
+        )
         await callback.answer()
         return
     else:
-        callback.message.answer("Сталася невідома помилка! Спробуйте будь ласка пізніше!")
+        callback.message.answer(
+            "Сталася невідома помилка! Спробуйте будь ласка пізніше!"
+        )
 
 
 @router.callback_query(date.ChoiceMasterDate.master)
-async def choice_master_for_date(callback:CallbackQuery):
+async def choice_master_for_date(callback: CallbackQuery):
     logger.info("Starting choice master for date")
     master_id = callback.data
-    status, dates = await api_client.get(f"/dates?master_id={master_id}", callback.from_user.id)
+    status, dates = await api_client.get(
+        f"/dates?master_id={master_id}", callback.from_user.id
+    )
     if status == 200:
         logger.info(f"Dates:{dates}")
-        await callback.message.answer(text=str(format_date(dates)), parse_mode="Markdown")
+        await callback.message.answer(
+            text=str(format_date(dates)), parse_mode="Markdown"
+        )
         await callback.answer()
         return
     elif status == 404:
@@ -201,8 +244,8 @@ async def choice_master_for_date(callback:CallbackQuery):
         await callback.answer()
         return
     else:
-        await callback.message.answer("Сталася невідома помилка! Спробуйте будь ласка пізніше!")
+        await callback.message.answer(
+            "Сталася невідома помилка! Спробуйте будь ласка пізніше!"
+        )
         await callback.answer()
         return
-    
-

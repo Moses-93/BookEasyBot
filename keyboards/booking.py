@@ -61,7 +61,7 @@ class BookingKeyboard(BaseInlineKeyboard):
                 ],
             ]
         )
-    
+
     def choice_master(self, data: dict[dict[List[Dict]]]):
         """Створення клавіатури для вибору майстра."""
         masters = data.get("detail").get("masters")

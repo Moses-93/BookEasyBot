@@ -23,7 +23,9 @@ async def start(message: Message):
 
 @router.message(F.text == "Додати час")
 async def start_add_time(message: Message, state: FSMContext):
-    status, dates = await api_client.get(endpoint="/dates", chat_id=message.from_user.id)
+    status, dates = await api_client.get(
+        endpoint="/dates", chat_id=message.from_user.id
+    )
     if status == 200:
         await message.answer(
             text="Оберіть дату, до якої ви бажаєте додати час!",
@@ -33,13 +35,15 @@ async def start_add_time(message: Message, state: FSMContext):
         return
     elif status == 404:
         await message.answer(
-            text="Ви не можете додати час до неіснуючої дати:)\nСпочатку додайте дату, а потім продовжимо")
-        return
-    
-    else:
-        await message.answer(text="Виникла невідома помилка!\n Спробуйте звернутись до адміністратора бота")
+            text="Ви не можете додати час до неіснуючої дати:)\nСпочатку додайте дату, а потім продовжимо"
+        )
         return
 
+    else:
+        await message.answer(
+            text="Виникла невідома помилка!\n Спробуйте звернутись до адміністратора бота"
+        )
+        return
 
 
 @router.message(F.text == "Видалити час")
@@ -59,7 +63,7 @@ async def select_date(callback: CallbackQuery, state: FSMContext):
     await state.update_data(date_id=callback.data)
     await callback.message.answer("Введіть час (у форматі HH:MM):")
     await callback.answer()
-    return    
+    return
 
 
 @router.message(CreateTimeStates.time)
