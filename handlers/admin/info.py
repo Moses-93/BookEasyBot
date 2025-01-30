@@ -3,15 +3,54 @@ import logging
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from services.api_client import api_client
 from states.business_info import *
-from keyboards.admin import inline_keyboard, reply_keyboard
+from keyboards.admin import reply_keyboard
 from keyboards.general import dynamic_keyboard
+
 
 PHONE_REGEX = r"^\+380\d{9}$"
 router = Router()
 logger = logging.getLogger(__name__)
+
+
+MESSAGES = {
+    "start": "👋 Вітаємо в панелі керування контактами! Тут ви можете додавати або оновлювати інформацію про ваш салон. Що бажаєте зробити?",
+    "add_info": "📝 Давайте почнемо! Як називається ваш салон? Напишіть назву, будь ласка.",
+    "edit_info": "🔄 Що саме ви хочете оновити? Оберіть поле зі списку нижче.",
+    "address": '📍 Тепер введіть адресу вашого салону. Наприклад: "м. Одеса, вул. Дерибасівська, 1". Де знаходиться ваш салон?',
+    "phone": "📞 Введіть номер телефону вашого салону у форматі +380XXXXXXXXX. Наприклад: +380501234567. Як клієнти можуть з вами зв'язатися?",
+    "invalid_phone": "📵 Ой, схоже, номер телефону введено неправильно. Будь ласка, введіть номер у форматі +380XXXXXXXXX. Наприклад: +380501234567. Спробуйте ще раз!",
+    "working_hours": '⏰ Вкажіть графік роботи вашого салону у форматі HH:MM-HH:MM. Наприклад: "9:00-18:00". Коли ви працюєте?',
+    "google_link": '🗺️ Додайте посилання на ваш салон у Google Maps, щоб клієнти могли легко вас знайти. Натисніть "Пропустити", якщо не хочете додавати це зараз.',
+    "description": '📖 Розкажіть трохи про ваш салон! Напишіть короткий опис, який зацікавить клієнтів. Наприклад: "Сучасний салон краси з професійними майстрами". Натисніть "Пропустити", якщо не хочете додавати опис.',
+    "telegram_link": '📲 Додайте посилання на ваш Telegram, щоб клієнти могли зв\'язатися з вами через месенджер. Наприклад: "https://t.me/ваш_акаунт". Натисніть "Пропустити", якщо не хочете додавати це зараз.',
+    "instagram_link": '📸 Додайте посилання на ваш Instagram, щоб клієнти могли побачити ваші роботи та новини. Наприклад: "https://instagram.com/ваш_акаунт". Натисніть "Пропустити", якщо не хочете додавати це зараз.',
+    "info_created": "🎉 Вітаємо! Інформація про ваш салон успішно збережена. Тепер клієнти зможуть легко знайти вас!",
+    "info_updated": '✅ Готово! Поле "{field}" успішно оновлено на "{new_value}". Клієнти побачать оновлену інформацію.',
+    "new_field": '🔄 Введіть нове значення для поля "{field}". Наприклад, якщо це "Назва", напишіть нову назву вашого салону. Що ви хочете ввести?',
+    "update_error": '❌ Упс! Не вдалося оновити поле "{field}". Перевірте, чи правильно ви ввели дані, і спробуйте ще раз.',
+    "api_error": "😕 Упс! Щось пішло не так. Помилка: {error}. Спробуйте ще раз або зверніться до підтримки.",
+}
+
+STATE_MESSAGES = {
+    CreateBusinessInfoState.google_link: (MESSAGES["google_link"], "skip_1"),
+    CreateBusinessInfoState.description: (MESSAGES["description"], "skip_2"),
+    CreateBusinessInfoState.telegram_link: (MESSAGES["telegram_link"], "skip_3"),
+    CreateBusinessInfoState.instagram_link: (MESSAGES["instagram_link"], "skip_4"),
+}
+
+
+async def send_skip_message(message: Message, state: FSMContext, next_state):
+    text, skip_data = STATE_MESSAGES.get(next_state, (None, None))
+    if text:
+        await message.answer(
+            text=text,
+            reply_markup=dynamic_keyboard.dynamic_inline_keyboard(
+                {"⏭️ Пропустити": skip_data}
+            ),
+        )
+        await state.set_state(next_state)
 
 
 @router.message(F.text == "Керувати контактами")
