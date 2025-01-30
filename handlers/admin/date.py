@@ -16,23 +16,29 @@ logger = logging.getLogger(__name__)
 @router.message(F.text == "Дати")
 async def main_date(message: Message):
     await message.answer(
-        text="Оберіть потрібну вам дію", reply_markup=reply_keyboard.manage_dates()
+        text="Ви перейшли в панель керування датами!\nОберіть потрібну вам дію!",
+        reply_markup=reply_keyboard.manage_dates(),
     )
     return
 
 
-@router.message(
-    F.text == "Видалити дату"
-) 
+@router.message(F.text == "Видалити дату")
 async def delete_date(message: Message, state: FSMContext):
     user_id = message.from_user.id
-    dates = await api_client.get(endpoint="/dates/", chat_id=user_id)
-    await message.answer(
-        text="Оберіть, яку дату ви бажаєте видалити",
-        reply_markup=inline_keyboard.main(dates, "date", "id"),
-    )
-    await state.set_state(DeleteDateState.date)
-    return
+    status, dates = await api_client.get(endpoint="/dates/", chat_id=user_id)
+    if status == 200:
+        await message.answer(
+            text="Оберіть, яку дату ви бажаєте видалити",
+            reply_markup=inline_keyboard.main_inline_keyboard(dates, "date", "id"),
+        )
+        await state.set_state(DeleteDateState.date)
+        return
+    if status == 404:
+        await message.answer(text="У вас поки немає доступних дат!")
+        return
+    else:
+        await message.answer(text="Виникла помилка! Спробуйте будь ласка пізніше!")
+        return
 
 
 @router.message(F.text == "Додати дату")
@@ -44,25 +50,32 @@ async def start_create_date(message: Message, state: FSMContext):
 
 @router.message(CreateDateState.date)
 async def add_date(message: Message, state: FSMContext):
-    await state.update_data(date=message.text)
+    date = message.text
+    await state.update_data(date=date)
     await state.set_state(CreateDateState.del_time)
-    await message.answer(text="Вкажіть в скільки годин дата повинна стати неактивною")
-    await message.answer(text=f"Наприклад: {message.text} перестане бути активною в {message.text} <17:00:00>")
-    
-        
+    await message.answer(
+        text=f"Вкажіть в скільки годин дата повинна стати неактивною! Наприклад: якщо ви вкажете 17:00, {date} стане неактивною в {date} 17:00:00"
+    )
+
 
 @router.message(CreateDateState.del_time)
 async def create_date(message: Message, state: FSMContext):
     data = await state.get_data()
     date = data.get("date")
     del_time = datetime.strptime(f"{date} {message.text}", "%Y-%m-%d %H:%M")
-    status, msg = await api_client.post(endpoint="/dates/", chat_id=message.from_user.id, json={"date":date, "del_time":str(del_time)})
+    status, msg = await api_client.post(
+        endpoint="/dates/",
+        chat_id=message.from_user.id,
+        json={"date": date, "del_time": str(del_time)},
+    )
     if status == 201:
         await message.answer(text="Дата успішно додана!")
         await state.clear()
-        return
+
     elif status >= 400:
-        await message.answer(text=f"Виникла помилка при створенні нової дати:{str(msg)}")
+        await message.answer(
+            text=f"Виникла помилка при створенні нової дати:{str(msg)}"
+        )
         await state.clear()
 
 
@@ -71,7 +84,16 @@ async def delete_date(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
     date_id = callback.data
     logger.info(f"Deleted date: {date_id}")
-    response = await api_client.delete(endpoint=f"/dates/{date_id}/", chat_id=user_id)
-    logger.info(f"Response: {response}")
-    await callback.message.reply(text=str(response))
-    await state.clear()
+    status, msg = await api_client.delete(
+        endpoint=f"/dates/{date_id}/", chat_id=user_id
+    )
+    if status == 204:
+        await callback.message.answer(text="Вказана вами дата успішно видалена!")
+        await state.clear()
+        await callback.answer()
+        return
+    else:
+        await callback.message.answer(text=f"При видаленні дати сталася помилка: {msg}")
+        await state.clear()
+        await callback.answer()
+        return
