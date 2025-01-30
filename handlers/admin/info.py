@@ -56,17 +56,14 @@ async def send_skip_message(message: Message, state: FSMContext, next_state):
 @router.message(F.text == "Керувати контактами")
 async def start(message: Message):
     await message.answer(
-        text="Ви перейли в панель керування контактами! \nОберіть потрібну вам дію!",
-        reply_markup=reply_keyboard.manage_contacts(),
+        text=MESSAGES["start"], reply_markup=reply_keyboard.manage_contacts()
     )
-    return
 
 
 @router.message(F.text == "Додати інформацію")
 async def start_add_info(message: Message, state: FSMContext):
-    await message.answer(text="Введіть назву вашого салону!")
+    await message.answer(text=MESSAGES["add_info"])
     await state.set_state(CreateBusinessInfoState.name)
-    return
 
 
 @router.message(F.text == "Оновити інформацію")
@@ -81,41 +78,31 @@ async def start_edit_info(message: Message, state: FSMContext):
             "Google Maps": "google_maps_url",
         }
     )
-    await message.answer(
-        text="Оберіть поле, яке ви хочете оновити!", reply_markup=keyboard
-    )
+    await message.answer(text=MESSAGES["edit_info"], reply_markup=keyboard)
     await state.set_state(UpdateBusinessInfoState.field)
 
 
 @router.message(CreateBusinessInfoState.name)
 async def set_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
-    await message.answer(
-        text="Введіть адресу вашого салону!\nПриклад: м. Одеса вул. Дерибасівська 1"
-    )
+    await message.answer(text=MESSAGES["address"])
     await state.set_state(CreateBusinessInfoState.address)
-    return
 
 
 @router.message(CreateBusinessInfoState.address)
 async def set_address(message: Message, state: FSMContext):
     await state.update_data(address=message.text)
-    await message.answer(
-        text="Введіть ваш робочий номер телефону!\nПриклад: +380501234567"
-    )
+    await message.answer(text=MESSAGES["phone"])
     await state.set_state(CreateBusinessInfoState.phone)
-    return
 
 
 @router.message(CreateBusinessInfoState.phone)
 async def set_phone(message: Message, state: FSMContext):
     if not re.match(PHONE_REGEX, message.text):
-        await message.answer("Неправильний формат телефону! Спробуйте знову.")
+        await message.answer(MESSAGES["invalid_phone"])
         return
     await state.update_data(phone=message.text)
-    await message.answer(
-        text="Введіть ваш графік роботи у форматі HH:MM!\nПриклад: 9:00-18:00"
-    )
+    await message.answer(text=MESSAGES["working_hours"])
     await state.set_state(CreateBusinessInfoState.working_hours)
 
 
@@ -210,7 +197,7 @@ async def set_link(message: Message, state: FSMContext):
 async def start_update_field(callback: CallbackQuery, state: FSMContext):
     field = callback.data
     await state.update_data(field=field)
-    await callback.message.answer(text=f"Введть нове значення поля {field}")
+    await callback.message.answer(text=MESSAGES["new_field"].format(field=field))
     await state.set_state(UpdateBusinessInfoState.new_value)
     await callback.answer()
 
@@ -226,12 +213,13 @@ async def update_field_value(message: Message, state: FSMContext):
             chat_id=message.from_user.id,
             json={field: new_value},
         )
-        if response.status == 200:
-            await message.answer(text=f"Значення поля {field} успішно оновлено!")
-            await state.clear()
-            return
+        if status == 204:
+            await message.answer(
+                text=MESSAGES["info_updated"].format(field=field, new_value=new_value)
+            )
+        elif status == 422:
+            await message.answer(text=MESSAGES["update_error"].format(field=field))
     except Exception as e:
         logger.error(f"Error: {e}")
-        await message.answer(f"Помилка при оновленні значення поля: {str(e)}")
-        await state.clear()
-    return
+        await message.answer(text=MESSAGES["api_error"].format(error=str(e)))
+    await state.clear()
