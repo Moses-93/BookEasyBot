@@ -8,6 +8,8 @@ class CreateBusinessInfoState(StatesGroup):
     working_hours = State()
     google_link = State()
     description = State()
+    telegram_link = State()
+    instagram_link = State()
 
 
 class UpdateBusinessInfoState(StatesGroup):
