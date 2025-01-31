@@ -5,12 +5,11 @@ import logging
 
 from aiogram import Bot, Dispatcher
 
-from handlers.user import user, booking, feedback
+from handlers.user import booking, feedback, auth
 from handlers.admin import time, start as admin_start, date, info, admin, service
 from handlers import general
 from core.dependencies import settings
 from core.middleware import UserIDMiddleware
-from handlers.user import user
 
 os.environ["TZ"] = "Europe/Kyiv"
 
@@ -34,7 +33,7 @@ dp.message.middleware(UserIDMiddleware())
 async def main():
     dp.include_router(general.router)
     dp.include_router(booking.router)
-    dp.include_router(user.router)
+    dp.include_router(auth.router)
     dp.include_router(time.router)
     dp.include_router(admin_start.router)
     dp.include_router(date.router)
