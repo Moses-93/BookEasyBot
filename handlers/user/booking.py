@@ -5,13 +5,50 @@ from aiogram.fsm.context import FSMContext
 
 from states.booking import BookingStates
 from keyboards.booking import booking_keyboard
-from keyboards.general import dynamic_keyboard
-from keyboards.general import general_reply_keyboard
+from keyboards.general import dynamic_keyboard, general_reply_keyboard
 from services.api_client import api_client
-
+from utils.formatted_view import format_booking
 
 router = Router()
 logger = logging.getLogger(__name__)
+
+MESSAGES = {
+    "start_booking": "👋 Вітаємо в системі бронювання! Тут ви можете записатися на послугу. Давайте почнемо! Оберіть послугу зі списку нижче:",
+    "multiple_masters": "🤔 Ой, схоже у вас не один майстер! Будь ласка, оберіть, до кого ви хочете записатися:",
+    "error_services": "😔 На жаль, сталася помилка при отриманні послуг. Спробуйте ще раз або зверніться до підтримки.",
+    "my_bookings": "📅 Ось ваші записи! Оберіть категорію, яку ви хочете переглянути:",
+    "back_to_main": "🏠 Ви повернулися до головного меню. Що бажаєте зробити далі?",
+    "select_master_success": "🎉 Чудовий вибір! Тепер оберіть послугу, яку ви хочете замовити:",
+    "select_master_error": "😅 Упс! Щось пішло не так. Спробуйте будь ласка пізніше!",
+    "no_services": "😕 Наразі доступних послуг немає. Спробуйте іншого майстра або зайдіть пізніше!",
+    "select_service_success": "📅 Чудово! Тепер оберіть бажану дату для запису:",
+    "select_service_error": "😔 На жаль, сталася помилка при отриманні доступних дат. Спробуйте ще раз!",
+    "no_dates": "😕 Наразі доступних дат немає. Спробуйте іншого майстра або зайдіть пізніше!",
+    "select_date_success": "⏰ Супер! Тепер оберіть зручний для вас час:",
+    "select_date_error": "😔 На жаль, сталася помилка при отриманні доступного часу. Спробуйте ще раз!",
+    "no_times": "😕 Наразі доступного часу немає. Спробуйте іншу дату або зайдіть пізніше!",
+    "booking_success": "🎉 Вітаємо! Ви успішно записалися. Ми чекаємо на вас!",
+    "booking_error": "😔 На жаль, сталася помилка при створенні запису. Спробуйте ще раз або зверніться до підтримки.",
+    "no_booking": "😕 На жаль, у вас поки немає записів, але, ви можете це швидко виправити",
+    "api_error": "😕 Упс! Щось пішло не так. Помилка: {error}. Спробуйте ще раз або зверніться до підтримки.",
+    "all_bookings": "📋 Ось всі ваші записи:",
+    "active_bookings": "📌 Ось ваші активні записи:",
+}
+
+
+async def handle_api_response(
+    status: int, data, message: Message, success_message: str, error_message: str
+):
+    if status == 200:
+        await message.answer(success_message, reply_markup=data)
+    elif status == 404:
+        await message.answer(
+            MESSAGES["no_services"]
+            if "services" in success_message
+            else MESSAGES["no_dates"]
+        )
+    else:
+        await message.answer(error_message)
 
 
 @router.message(F.text == "Записатись")
@@ -20,20 +57,28 @@ async def start_booking(message: Message, state: FSMContext):
     Початок процесу бронювання: вибір послуги.
     """
     try:
-
-        services = await api_client.get("/services", message.from_user.id)
-        keyboard = booking_keyboard.service_keyboard(services)
-        await message.answer("Оберіть послугу:", reply_markup=keyboard)
-        await state.set_state(BookingStates.service)
+        status, datas = await api_client.get("/services/", message.from_user.id)
+        if status == 200:
+            await message.answer(
+                MESSAGES["start_booking"],
+                reply_markup=booking_keyboard.service_keyboard(datas),
+            )
+            await state.set_state(BookingStates.service)
+        elif status == 409:
+            await message.answer(
+                MESSAGES["multiple_masters"],
+                reply_markup=booking_keyboard.choice_master(datas),
+            )
+            await state.set_state(BookingStates.master)
     except Exception as e:
         logger.error(f"Error: {e}")
-        return await message.reply(f"Помилка при отриманні послуг: {str(e)}")
+        await message.reply(MESSAGES["error_services"])
 
 
 @router.message(F.text == "Мої записи")
 async def my_bookings(message: Message):
     await message.answer(
-        text="Оберіть потрібну вам категрію",
+        text=MESSAGES["my_bookings"],
         reply_markup=dynamic_keyboard.dynamic_inline_keyboard(
             button_names={
                 "Всі записи": "all_bookings",
@@ -41,16 +86,32 @@ async def my_bookings(message: Message):
             }
         ),
     )
-    return
 
 
 @router.message(F.text == "Назад")
 async def back_to_main_menu(message: Message):
     await message.answer(
-        text="Ви повернулися до головного меню",
+        text=MESSAGES["back_to_main"],
         reply_markup=general_reply_keyboard.main_keyboard(),
     )
-    return
+
+
+@router.callback_query(BookingStates.master)
+async def select_master(callback: CallbackQuery, state: FSMContext):
+    master_id = callback.data
+    await state.update_data(master_id=master_id)
+    status, services = await api_client.get(
+        f"/services?master_id={master_id}", callback.from_user.id
+    )
+    await handle_api_response(
+        status,
+        booking_keyboard.service_keyboard(services),
+        callback.message,
+        MESSAGES["select_master_success"],
+        MESSAGES["select_master_error"],
+    )
+    await state.set_state(BookingStates.service)
+    await callback.answer()
 
 
 @router.callback_query(BookingStates.service)
@@ -58,18 +119,22 @@ async def select_service(callback: CallbackQuery, state: FSMContext):
     """
     Обробка вибору послуги.
     """
-    user_id = callback.from_user.id
-    logger.info(f"Callback: {callback.data}")
-    try:
-        await state.update_data(service_id=callback.data)
-        dates = await api_client.get(endpoint="/dates", chat_id=user_id)
-
-        await callback.message.answer(
-            "Оберіть дату:", reply_markup=booking_keyboard.date_keyboard(dates)
-        )
-        await state.set_state(BookingStates.date)
-    except Exception as e:
-        await callback.message.answer(f"Помилка при отриманні доступних дат: {str(e)}")
+    data = await state.get_data()
+    master_id = data.get("master_id")
+    await state.update_data(service_id=callback.data)
+    status, dates = await api_client.get(
+        f"/dates?master_id={master_id}" if master_id else "/dates/",
+        callback.from_user.id,
+    )
+    await handle_api_response(
+        status,
+        booking_keyboard.date_keyboard(dates),
+        callback.message,
+        MESSAGES["select_service_success"],
+        MESSAGES["select_service_error"],
+    )
+    await state.set_state(BookingStates.date)
+    await callback.answer()
 
 
 @router.callback_query(BookingStates.date)
@@ -78,61 +143,92 @@ async def select_date(callback: CallbackQuery, state: FSMContext):
     Обробка вибору дати.
     """
     date_id = callback.data
+    data = await state.get_data()
+    master_id = data.get("master_id")
     await state.update_data(date_id=date_id)
-    times = await api_client.get(
-        endpoint=f"/times/{date_id}", chat_id=callback.from_user.id
+    status, times = await api_client.get(
+        (
+            f"/times/?date_id={date_id}&master_id={master_id}"
+            if master_id
+            else f"/times/?date_id={date_id}"
+        ),
+        callback.from_user.id,
     )
-    await callback.message.answer(
-        text="Оберіть зручний для вас час:",
-        reply_markup=booking_keyboard.time_keyboard(times),
+    await handle_api_response(
+        status,
+        booking_keyboard.time_keyboard(times),
+        callback.message,
+        MESSAGES["select_date_success"],
+        MESSAGES["select_date_error"],
     )
     await state.set_state(BookingStates.time)
+    await callback.answer()
 
 
-@router.message(BookingStates.time)
-async def select_time(message: Message, state: FSMContext):
+@router.callback_query(BookingStates.time)
+async def select_time(callback: CallbackQuery, state: FSMContext):
     """
     Обробка введення часу та завершення збору даних.
     """
-    await state.update_data(time=message.text)
+    await state.update_data(time_id=callback.data)
     data = await state.get_data()
-    logger.info(f"Data: {data}")
+    master_id = data.get("master_id")
     try:
-        response = await api_client.post("/bookings/", message.from_user.id, json=data)
-        await message.reply(
-            f"Ваше бронювання успішно створено! Деталі:\n"
-            f"Послуга: {data['service']}\n"
-            f"Дата: {data['date']}\n"
-            f"Час: {message.text}"
+        status, response_data = await api_client.post(
+            f"/bookings?master_id={master_id}" if master_id else "/bookings/",
+            callback.from_user.id,
+            json=data,
         )
+        if status == 201:
+            await callback.message.answer(MESSAGES["booking_success"])
+            await callback.answer()
+        elif status == 400:
+            await callback.message.answer(MESSAGES["booking_error"])
     except Exception as e:
-        await message.reply(f"Сталася помилка при створенні бронювання: {str(e)}")
-
-    await state.clear()
+        await callback.message.reply(
+            f"Сталася помилка при створенні бронювання: {str(e)}"
+        )
+    finally:
+        await state.clear()
 
 
 @router.callback_query(F.data == "all_bookings")
-async def show_all_bookings(callback: CallbackQuery, user_id):
-    response = await api_client.get(endpoint="/bookings/", chat_id=user_id)
-    if response.status == 200:
-        await callback.answer(text="Всі записи:")
-        for booking in response.json():
-            await callback.answer(
-                text=f"Дата: {booking['date']}, ��ас: {booking['time']}, Статус: {booking['status']}"
-            )
-    await callback.answer(text="Записи на майбутній день")
-    return
+async def show_all_bookings(callback: CallbackQuery):
+    status, bookings = await api_client.get(
+        endpoint="/bookings/", chat_id=callback.from_user.id
+    )
+    if status == 200:
+        await callback.message.answer(
+            MESSAGES["all_bookings"], reply_markup=str(format_booking(bookings))
+        )
+        await callback.answer()
+        return
+    elif status == 404:
+        await callback.message.answer(MESSAGES["no_booking"])
+        await callback.answer()
+        return
+    else:
+        await callback.message.answer(MESSAGES["api_error"].format(error=bookings))
+        await callback.answer()
+        return
 
 
 @router.callback_query(F.data == "active_bookings")
-async def show_active_bookings(callback: CallbackQuery, user_id):
-    response = await api_client.get(
-        endpoint="/bookings/", chat_id=user_id, params={"active:": True}
+async def show_active_bookings(callback: CallbackQuery):
+    status, bookings = await api_client.get(
+        endpoint="/bookings?active=True", chat_id=callback.from_user.id
     )
-    if response.status == 200:
-        await callback.answer(text="Активні записи:")
-        for booking in response.json():
-            await callback.answer(
-                text=f"Дата: {booking['date']}, Час: {booking['time']}, Статус: {booking['status']}"
-            )
-    return
+    if status == 200:
+        await callback.message.answer(
+            MESSAGES["all_bookings"], reply_markup=str(format_booking(bookings))
+        )
+        await callback.answer()
+        return
+    elif status == 404:
+        await callback.message.answer(MESSAGES["no_booking"])
+        await callback.answer()
+        return
+    else:
+        await callback.message.answer(MESSAGES["api_error"].format(error=bookings))
+        await callback.answer()
+        return
