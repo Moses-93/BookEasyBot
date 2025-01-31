@@ -5,3 +5,4 @@ class BookingStates(StatesGroup):
     service = State()
     date = State()
     time = State()
+    master = State()
