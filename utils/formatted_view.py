@@ -14,7 +14,10 @@ def format_service(data: List[Dict]):
 
     formatted = f"📋 *ДОСТУПНІ ПОСЛУГИ*\n\n"
     for item in sorted_data(data):
-        formatted += f"🖌️ *{item.get("name")} - {item.get("price")} грн.*\n\n"
+        formatted += (
+            f"*{item.get("name")} - {item.get("price")} грн.*\n" f"{'-' * 30}\n"
+        )
+
     return formatted
 
 
