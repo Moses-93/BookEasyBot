@@ -70,13 +70,15 @@ def format_booking(bookings: List[Dict]):
     """Форматування записів для виводу."""
 
     formatted = "📝 *ЗАПИСИ*\n\n"
-    for booking in bookings:
+    for num, booking in enumerate(bookings):
         formatted += (
-            f"👤 *{booking.get("name")}*\n"
-            f"🆔 *{booking.get("service")}*\n"
-            f"📅 *{booking.get("date")}*\n"
-            f"⏰ *{booking.get("time")}*\n"
-            f"{'-' * 30}\n"
+            f"🆔 *{num + 1}*\n"
+            f"👤 *{booking["user"].get("username")}*\n"
+            f"📞 *{booking["user"].get("phone")}*\n"
+            f"📌 *{booking["service"].get("name")}*\n"
+            f"📅 *{booking["date"].get("date")}*\n"
+            f"⏰ *{booking["time"].get("time")}*\n"
+            f"{'-  ' * 20}\n"
         )
     return formatted
 
