@@ -1,5 +1,6 @@
 from typing import List, Dict, Callable, Optional
-from aiogram.types import InlineKeyboardButton
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from .base_keyboard import BaseInlineKeyboard
 from utils.formatted_view import sorted_data
@@ -68,6 +69,23 @@ class BookingKeyboard(BaseInlineKeyboard):
         return self.generate_keyboard(
             masters, text_key="name", callback_key="id", preprocess=sorted_data
         )
+
+    def get_pagination_keyboard(
+        self, offset: int, limit: int, total: int
+    ) -> InlineKeyboardMarkup:
+        keyboard = InlineKeyboardBuilder()
+
+        if offset > 0:
+            keyboard.button(
+                text="⬅️ Назад", callback_data=f"prev:{offset-limit}:{limit}"
+            )
+
+        if offset + limit < total:
+            keyboard.button(
+                text="Вперед ➡️", callback_data=f"next:{offset+limit}:{limit}"
+            )
+
+        return keyboard.as_markup()
 
     def reminder_keyboard(self):
         return self.create_inline_keyboard(
