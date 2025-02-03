@@ -17,6 +17,24 @@ logger = logging.getLogger(__name__)
 
 router = Router()
 
+MESSAGES = {
+    "my_bookings": "📅 Ось ваші записи! Оберіть категорію, яку ви хочете переглянути:",
+    "all_bookings": "📋 Ось всі ваші записи:",
+}
+
+
+@router.message(F.text == "Історія записів")
+async def my_bookings(message: Message):
+    await message.answer(
+        text=MESSAGES["my_bookings"],
+        reply_markup=dynamic_keyboard.dynamic_inline_keyboard(
+            button_names={
+                "Всі записи": "all_bookings",
+                "Активні записи": "active_bookings",
+            }
+        ),
+    )
+
 
 @router.message(F.text == "Контакти")
 async def contact_info(message: Message, state: FSMContext):
