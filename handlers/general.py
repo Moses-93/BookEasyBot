@@ -5,13 +5,14 @@ from aiogram.fsm.context import FSMContext
 from services.api_client import api_client
 from states import time, date, service, business_info
 from utils.formatted_view import (
+    format_booking,
     format_business_info,
     format_service,
     format_date,
     format_time,
 )
 from keyboards.booking import booking_keyboard
-
+from keyboards.general import dynamic_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -265,5 +266,59 @@ async def choice_master_for_date(callback: CallbackQuery):
         await callback.message.answer(
             "Сталася невідома помилка! Спробуйте будь ласка пізніше!"
         )
+        await callback.answer()
+        return
+
+
+@router.callback_query(F.data.endswith("bookings"))
+async def show_bookings(callback: CallbackQuery):
+    action = callback.data.split("_")[0]
+    logger.info(f"Action: {action}")
+    offset = 0
+    limit = 5
+    if action == "active":
+        status, bookings = await api_client.get(
+            endpoint="/bookings?active=True", chat_id=callback.from_user.id
+        )
+    elif action == "all":
+        status, bookings = await api_client.get(
+            endpoint="/bookings/", chat_id=callback.from_user.id
+        )
+    if status == 200:
+        total_bookings = len(bookings)
+        logger.info(f"Bookings:{[b for b in bookings]}")
+        logger.info(f"Total bookings:{total_bookings}")
+
+        await callback.message.edit_text(
+            text=str(format_booking(bookings)),
+            reply_markup=booking_keyboard.get_pagination_keyboard(
+                offset, limit, total_bookings
+            ),
+            parse_mode="Markdown",
+        )
+
+        await callback.answer()
+        return
+    else:
+        await callback.message.answer("Error")
+
+
+@router.callback_query(F.data.startswith(("next", "prev")))
+async def paginate_bookings(callback: CallbackQuery):
+    _, new_offset, limit = callback.data.split(":")
+    new_offset, limit = int(new_offset), int(limit)
+    status, bookings = await api_client.get(
+        endpoint="/bookings/", chat_id=callback.from_user.id
+    )
+    if status == 200:
+        total_bookings = len(bookings)
+
+        await callback.message.edit_text(
+            text=str(format_booking(bookings)),
+            reply_markup=booking_keyboard.get_pagination_keyboard(
+                new_offset, limit, total_bookings
+            ),
+        )
+
         await callback.answer()
         return
