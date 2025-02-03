@@ -20,7 +20,7 @@ class AdminReplyKeyboard(BaseReplyKeyboard):
                 ],
                 [
                     KeyboardButton(text="Керувати контактами"),
-                    KeyboardButton(text="Записи"),
+                    KeyboardButton(text="Історія записів"),
                 ],
             ]
         )
