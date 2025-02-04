@@ -1,9 +1,10 @@
+from datetime import datetime, timedelta
 import logging
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from states.booking import BookingStates
+from states.booking import BookingStates, CancelBook
 from keyboards.booking import booking_keyboard
 from keyboards.general import dynamic_keyboard, general_reply_keyboard
 from services.api_client import api_client
@@ -16,7 +17,6 @@ MESSAGES = {
     "start_booking": "👋 Вітаємо в системі бронювання! Тут ви можете записатися на послугу. Давайте почнемо! Оберіть послугу зі списку нижче:",
     "multiple_masters": "🤔 Ой, схоже у вас не один майстер! Будь ласка, оберіть, до кого ви хочете записатися:",
     "error_services": "😔 На жаль, сталася помилка при отриманні послуг. Спробуйте ще раз або зверніться до підтримки.",
-    "my_bookings": "📅 Ось ваші записи! Оберіть категорію, яку ви хочете переглянути:",
     "back_to_main": "🏠 Ви повернулися до головного меню. Що бажаєте зробити далі?",
     "select_master_success": "🎉 Чудовий вибір! Тепер оберіть послугу, яку ви хочете замовити:",
     "select_master_error": "😅 Упс! Щось пішло не так. Спробуйте будь ласка пізніше!",
@@ -31,7 +31,6 @@ MESSAGES = {
     "booking_error": "😔 На жаль, сталася помилка при створенні запису. Спробуйте ще раз або зверніться до підтримки.",
     "no_booking": "😕 На жаль, у вас поки немає записів, але, ви можете це швидко виправити",
     "api_error": "😕 Упс! Щось пішло не так. Помилка: {error}. Спробуйте ще раз або зверніться до підтримки.",
-    "all_bookings": "📋 Ось всі ваші записи:",
     "active_bookings": "📌 Ось ваші активні записи:",
 }
 
@@ -75,19 +74,6 @@ async def start_booking(message: Message, state: FSMContext):
         await message.reply(MESSAGES["error_services"])
 
 
-@router.message(F.text == "Мої записи")
-async def my_bookings(message: Message):
-    await message.answer(
-        text=MESSAGES["my_bookings"],
-        reply_markup=dynamic_keyboard.dynamic_inline_keyboard(
-            button_names={
-                "Всі записи": "all_bookings",
-                "Активні записи": "active_bookings",
-            }
-        ),
-    )
-
-
 @router.message(F.text == "Назад")
 async def back_to_main_menu(message: Message):
     await message.answer(
@@ -120,8 +106,10 @@ async def select_service(callback: CallbackQuery, state: FSMContext):
     Обробка вибору послуги.
     """
     data = await state.get_data()
+    service_id, service = callback.data.split(":")
     master_id = data.get("master_id")
-    await state.update_data(service_id=callback.data)
+    logger.info(f"Service:{callback.data}")
+    await state.update_data(service_id=service_id, service=service)
     status, dates = await api_client.get(
         f"/dates?master_id={master_id}" if master_id else "/dates/",
         callback.from_user.id,
@@ -142,10 +130,10 @@ async def select_date(callback: CallbackQuery, state: FSMContext):
     """
     Обробка вибору дати.
     """
-    date_id = callback.data
+    date_id, date = callback.data.split(":")
     data = await state.get_data()
     master_id = data.get("master_id")
-    await state.update_data(date_id=date_id)
+    await state.update_data(date_id=date_id, date=date)
     status, times = await api_client.get(
         (
             f"/times/?date_id={date_id}&master_id={master_id}"
@@ -170,65 +158,78 @@ async def select_time(callback: CallbackQuery, state: FSMContext):
     """
     Обробка введення часу та завершення збору даних.
     """
-    await state.update_data(time_id=callback.data)
+    logger.info(f"Callback:{callback.data}")
+    time_id, time = callback.data.split(f":", 1)
+    await state.set_state(BookingStates.reminter_ofset)
+    await state.update_data(time_id=time_id, time=time)
+    await callback.message.answer(
+        "Супер! А тепер вкажіть за скільки годин ви б хотіли отримати нагадування, але, не більше чим за 23 години",
+        reply_markup=dynamic_keyboard.dynamic_inline_keyboard(
+            {"Не отримувати нагадування": "skip"}
+        ),
+    )
+    await callback.answer()
+
+
+@router.message(BookingStates.reminter_ofset)
+async def select_reminder_offset(message: Message, state: FSMContext):
     data = await state.get_data()
     master_id = data.get("master_id")
+    if message.text != "skip":
+        try:
+            offset = int(message.text)
+        except ValueError:
+            await message.answer("Вкажіть ціле цисло. Спробуйте знову")
+        date, time = data.get("date"), data.get("time")
+        date_time = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M:%S")
+        reminder_time = date_time - timedelta(hours=offset)
+        await state.update_data(reminder_time=str(reminder_time))
+        data = await state.get_data()
+        logger.info(f"Data:{data}")
+
     try:
         status, response_data = await api_client.post(
             f"/bookings?master_id={master_id}" if master_id else "/bookings/",
-            callback.from_user.id,
+            message.from_user.id,
             json=data,
         )
         if status == 201:
-            await callback.message.answer(MESSAGES["booking_success"])
-            await callback.answer()
+            await message.answer(MESSAGES["booking_success"])
         elif status == 400:
-            await callback.message.answer(MESSAGES["booking_error"])
+            await message.answer(MESSAGES["booking_error"])
     except Exception as e:
-        await callback.message.reply(
-            f"Сталася помилка при створенні бронювання: {str(e)}"
-        )
+        await message.reply(f"Сталася помилка при створенні бронювання: {str(e)}")
     finally:
         await state.clear()
 
 
-@router.callback_query(F.data == "all_bookings")
-async def show_all_bookings(callback: CallbackQuery):
+@router.callback_query(F.data == "cancel_book")
+async def start_cancel_book(callback: CallbackQuery, state: FSMContext):
     status, bookings = await api_client.get(
-        endpoint="/bookings/", chat_id=callback.from_user.id
+        "/bookings?active=True", chat_id=callback.from_user.id
     )
     if status == 200:
         await callback.message.answer(
-            MESSAGES["all_bookings"], reply_markup=str(format_booking(bookings))
+            str(format_booking(bookings)), parse_mode="Markdown"
         )
-        await callback.answer()
-        return
-    elif status == 404:
-        await callback.message.answer(MESSAGES["no_booking"])
-        await callback.answer()
-        return
-    else:
-        await callback.message.answer(MESSAGES["api_error"].format(error=bookings))
-        await callback.answer()
-        return
-
-
-@router.callback_query(F.data == "active_bookings")
-async def show_active_bookings(callback: CallbackQuery):
-    status, bookings = await api_client.get(
-        endpoint="/bookings?active=True", chat_id=callback.from_user.id
-    )
-    if status == 200:
         await callback.message.answer(
-            MESSAGES["all_bookings"], reply_markup=str(format_booking(bookings))
+            "Оберіть, який запис ви хочете скасувати",
+            reply_markup=booking_keyboard.cancel_booking(bookings),
         )
         await callback.answer()
-        return
-    elif status == 404:
-        await callback.message.answer(MESSAGES["no_booking"])
-        await callback.answer()
-        return
+        await state.set_state(CancelBook.book)
     else:
-        await callback.message.answer(MESSAGES["api_error"].format(error=bookings))
-        await callback.answer()
-        return
+        await callback.message.answer("Помилка")
+
+
+@router.callback_query(CancelBook.book)
+async def cancel_book(callback: CallbackQuery, state: FSMContext):
+    book_id = callback.data
+    logger.info(f"Book_id: {book_id}")
+    status, msg = await api_client.patch(
+        f"/bookings/{book_id}", chat_id=callback.from_user.id
+    )
+    if status == 204:
+        await callback.message.answer("Ви успішно скасували свій запис")
+    else:
+        await callback.message.answer("Помилка")
