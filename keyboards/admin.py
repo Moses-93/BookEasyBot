@@ -14,38 +14,37 @@ class AdminReplyKeyboard(BaseReplyKeyboard):
         return self.create_reply_keyboard(
             keyboard=[
                 [
-                    KeyboardButton(text="Дати"),
-                    KeyboardButton(text="Години"),
-                    KeyboardButton(text="Керувати послугами"),
+                    KeyboardButton(text="📋 Послуги"),
+                    KeyboardButton(text="📖 Записи"),
+                    KeyboardButton(text="📅 Розклад"),
                 ],
                 [
-                    KeyboardButton(text="Керувати контактами"),
-                    KeyboardButton(text="Історія записів"),
+                    KeyboardButton(text="📕 Контакти"),
+                    KeyboardButton(text="📊 Статистика"),
+                    KeyboardButton(text="⭐️ Відгуки"),
+                ],
+                [
+                    KeyboardButton(text="💳 Підписка"),
+                    KeyboardButton(text="☎️ Підтримка"),
                 ],
             ]
         )
 
-    def manage_dates(self) -> ReplyKeyboardMarkup:
+    def manage_schedule(self):
         return self.create_reply_keyboard(
             keyboard=[
                 [
-                    KeyboardButton(text="Додати дату"),
-                    KeyboardButton(text="Видалити дату"),
+                    KeyboardButton(text="➕ Додати дату"),
+                    KeyboardButton(text="➖ Видалити дату"),
                 ],
-                [KeyboardButton(text="Доступні дати")],
-                [KeyboardButton(text="Назад")],
-            ]
-        )
-
-    def manage_times(self) -> ReplyKeyboardMarkup:
-        return self.create_reply_keyboard(
-            keyboard=[
                 [
-                    KeyboardButton(text="Додати час"),
-                    KeyboardButton(text="Видалити час"),
+                    KeyboardButton(text="⏰ Додати час"),
+                    KeyboardButton(text="❌ Видалити час"),
                 ],
-                [KeyboardButton(text="Доступний час")],
-                [KeyboardButton(text="Назад")],
+                [
+                    KeyboardButton(text="📅 Доступні дати"),
+                    KeyboardButton(text="⏱️ Доступний час"),
+                ],
             ]
         )
 
@@ -53,14 +52,16 @@ class AdminReplyKeyboard(BaseReplyKeyboard):
         return self.create_reply_keyboard(
             keyboard=[
                 [
-                    KeyboardButton(text="Додати послугу"),
-                    KeyboardButton(text="Видалити послугу"),
+                    KeyboardButton(text="➕ Додати послугу"),  # Додавання
+                    KeyboardButton(text="➖ Видалити послугу"),  # Видалення
                 ],
                 [
-                    KeyboardButton(text="Редагувати послугу"),
-                    KeyboardButton(text="Доступні послуги"),
+                    KeyboardButton(
+                        text="✏️ Редагувати послугу"
+                    ),  # Олівець для редагування
+                    KeyboardButton(text="📋 Доступні послуги"),  # Список
                 ],
-                [KeyboardButton(text="Назад")],
+                [KeyboardButton(text="🔙 Назад")],  # Назад
             ]
         )
 
@@ -80,13 +81,50 @@ class AdminReplyKeyboard(BaseReplyKeyboard):
         return self.create_reply_keyboard(
             keyboard=[
                 [
-                    KeyboardButton(text="Додати інформацію"),
-                    KeyboardButton(text="Оновити інформацію"),
+                    KeyboardButton(text="➕ Додати дані"),
+                    KeyboardButton(text="🔄 Оновити дані"),
                 ],
                 [
-                    KeyboardButton(text="Показати інформацію"),
+                    KeyboardButton(text="📖 Показати дані"),
                 ],
-                [KeyboardButton(text="Назад")],
+                [KeyboardButton(text="🔙 Назад")],
+            ]
+        )
+
+    def manage_bookings(self):
+        return self.create_reply_keyboard(
+            keyboard=[
+                [
+                    KeyboardButton(text="📂 Активні записи"),
+                    KeyboardButton(text="🗄️ Архів записів"),
+                ],
+                [KeyboardButton(text="🔙 Назад")],
+            ]
+        )
+
+    def manage_statistics(self):
+        return self.create_reply_keyboard(
+            keyboard=[
+                [
+                    KeyboardButton(text="📈 Кількість записів"),  # Графік зростання
+                    KeyboardButton(
+                        text="⭐️ Популярні послуги"
+                    ),  # Зірка для топ-записів
+                ],
+                [KeyboardButton(text="💰 Дохід")],  # Гроші для доходу
+                [KeyboardButton(text="🔙 Назад")],  # Назад
+            ]
+        )
+
+    def manage_subscriptions(self):
+        return self.create_reply_keyboard(
+            keyboard=[
+                [
+                    KeyboardButton(text="📜 Моя підписка"),  # Рулон паперу для статусу
+                    KeyboardButton(text="🔄 Оновити підписку"),  # Стрілки для оновлення
+                ],
+                [KeyboardButton(text="❌ Скасувати підписку")],  # Хрестик для видалення
+                [KeyboardButton(text="🔙 Назад")],  # Назад
             ]
         )
 
