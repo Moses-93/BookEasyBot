@@ -9,15 +9,30 @@ class GeneralReplyKeyboard(BaseReplyKeyboard):
         return self.create_reply_keyboard(
             keyboard=[
                 [
-                    KeyboardButton(text="Записатись"),
-                    KeyboardButton(text="Контакти"),
+                    KeyboardButton(text="📝 Новий запис"),
                 ],
                 [
-                    KeyboardButton(text="Доступні послуги"),
-                    KeyboardButton(text="Доступні дати"),
-                    KeyboardButton(text="Доступний час"),
+                    KeyboardButton(text="📋 Послуги"),
+                    KeyboardButton(text="🗓 Розклад"),
+                    KeyboardButton(text="📖 Мої записи"),
                 ],
-                [KeyboardButton(text="Відгуки")],
+                [
+                    KeyboardButton(text="⭐️ Відгуки"),
+                    KeyboardButton(text="📕 Контакти"),
+                    KeyboardButton(text="☎️ Підтримка"),
+                ],
+            ]
+        )
+
+    def manage_bookings(self):
+        return self.create_reply_keyboard(
+            keyboard=[
+                [
+                    KeyboardButton(text="📂 Активні записи"),
+                    KeyboardButton(text="🗄️ Архів записів"),
+                ],
+                [KeyboardButton(text="❌ Скасувати запис")],
+                [KeyboardButton(text="🔙 Назад")],
             ]
         )
 
