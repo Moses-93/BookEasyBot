@@ -7,12 +7,13 @@ from states import time, date, service, business_info
 from utils.formatted_view import (
     format_booking,
     format_business_info,
+    format_reviews,
     format_service,
     format_date,
     format_time,
 )
 from keyboards.booking import booking_keyboard
-from keyboards.general import dynamic_keyboard
+from keyboards.general import dynamic_keyboard, general_reply_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -24,20 +25,25 @@ MESSAGES = {
 }
 
 
-@router.message(F.text == "Історія записів")
+@router.message(F.text == "Відгуки")
+async def feedback(message: Message):
+    response = await api_client.get(
+        endpoint="/feedbacks/", chat_id=message.from_user.id
+    )
+    keyboard = dynamic_keyboard.create_reply_keyboard(button_names=["Залишити відгук"])
+    feedbacks = await format_reviews(response)
+    await message.answer(text=feedbacks, reply_markup=keyboard, parse_mode="Markdown")
+
+
+@router.message(F.text == "📖 Мої записи")
 async def my_bookings(message: Message):
     await message.answer(
         text=MESSAGES["my_bookings"],
-        reply_markup=dynamic_keyboard.dynamic_inline_keyboard(
-            button_names={
-                "Всі записи": "all_bookings",
-                "Активні записи": "active_bookings",
-            }
-        ),
+        reply_markup=general_reply_keyboard.manage_bookings(),
     )
 
 
-@router.message(F.text == "Контакти")
+@router.message(F.text == "📕 Контакти")
 async def contact_info(message: Message, state: FSMContext):
     status, data = await api_client.get(
         endpoint="/business-info/", chat_id=message.from_user.id
@@ -62,7 +68,7 @@ async def contact_info(message: Message, state: FSMContext):
         return
 
 
-@router.message(F.text == "Доступні послуги")
+@router.message(F.text == "📋 Послуги")
 async def start_booking(message: Message, state: FSMContext):
     user_id = message.from_user.id
     status, data = await api_client.get(endpoint="/services/", chat_id=user_id)

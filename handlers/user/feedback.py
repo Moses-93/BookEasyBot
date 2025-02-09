@@ -6,21 +6,10 @@ from aiogram.fsm.context import FSMContext
 from services.api_client import api_client
 from states.feedback import CreateFeedbackState
 from keyboards.general import dynamic_keyboard
-from utils.formatted_view import format_reviews
 
 
 router = Router()
 logger = logging.getLogger(__name__)
-
-
-@router.message(F.text == "Відгуки")
-async def feedback(message: Message):
-    response = await api_client.get(
-        endpoint="/feedbacks/", chat_id=message.from_user.id
-    )
-    keyboard = dynamic_keyboard.create_reply_keyboard(button_names=["Залишити відгук"])
-    feedbacks = await format_reviews(response)
-    await message.answer(text=feedbacks, reply_markup=keyboard, parse_mode="Markdown")
 
 
 @router.message(F.text == "Залишити відгук")
