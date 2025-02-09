@@ -6,3 +6,8 @@ class BookingStates(StatesGroup):
     date = State()
     time = State()
     master = State()
+    reminter_ofset = State()
+
+
+class CancelBook(StatesGroup):
+    book = State()
