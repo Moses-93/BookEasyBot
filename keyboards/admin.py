@@ -1,32 +1,40 @@
 from aiogram.types import (
-    InlineKeyboardButton,
     KeyboardButton,
     ReplyKeyboardMarkup,
-    InlineKeyboardMarkup,
 )
-from typing import List, Dict
-from .base_keyboard import BaseReplyKeyboard, BaseInlineKeyboard
+from .base_keyboard import BaseReplyKeyboard
 
 
-class AdminReplyKeyboard(BaseReplyKeyboard):
+class AdminKeyboard(BaseReplyKeyboard):
 
     def admin_main_menu(self) -> ReplyKeyboardMarkup:
         return self.create_reply_keyboard(
             keyboard=[
                 [
-                    KeyboardButton(text="📋 Послуги"),
-                    KeyboardButton(text="📖 Записи"),
+                    KeyboardButton(text="📖 Послуги"),
+                    KeyboardButton(text="📒 Записи"),
                     KeyboardButton(text="📅 Розклад"),
                 ],
                 [
                     KeyboardButton(text="📕 Контакти"),
-                    KeyboardButton(text="📊 Статистика"),
+                    KeyboardButton(text="📊 Аналітика"),
                     KeyboardButton(text="⭐️ Відгуки"),
                 ],
                 [
-                    KeyboardButton(text="💳 Підписка"),
+                    KeyboardButton(text="⚙️ Налаштування"),
                     KeyboardButton(text="☎️ Підтримка"),
                 ],
+            ]
+        )
+
+    def manage_settings(self):
+        return self.create_reply_keyboard(
+            keyboard=[
+                [
+                    KeyboardButton(text="💳 Підписка"),
+                    KeyboardButton(text="🔗 Посилання клієнтам"),
+                ],
+                [KeyboardButton(text="🔙 Назад")],
             ]
         )
 
@@ -34,17 +42,18 @@ class AdminReplyKeyboard(BaseReplyKeyboard):
         return self.create_reply_keyboard(
             keyboard=[
                 [
-                    KeyboardButton(text="➕ Додати дату"),
-                    KeyboardButton(text="➖ Видалити дату"),
+                    KeyboardButton(text="➕📅 Додати дату"),
+                    KeyboardButton(text="❌📅 Видалити дату"),
                 ],
                 [
-                    KeyboardButton(text="⏰ Додати час"),
-                    KeyboardButton(text="❌ Видалити час"),
+                    KeyboardButton(text="➕⏰ Додати час"),
+                    KeyboardButton(text="❌⏰ Видалити час"),
                 ],
                 [
                     KeyboardButton(text="📅 Доступні дати"),
                     KeyboardButton(text="⏱️ Доступний час"),
                 ],
+                [KeyboardButton(text="🔙 Назад")],
             ]
         )
 
@@ -52,16 +61,16 @@ class AdminReplyKeyboard(BaseReplyKeyboard):
         return self.create_reply_keyboard(
             keyboard=[
                 [
-                    KeyboardButton(text="➕ Додати послугу"),  # Додавання
-                    KeyboardButton(text="➖ Видалити послугу"),  # Видалення
+                    KeyboardButton(text="➕ Додати послугу"),
+                    KeyboardButton(text="➖ Видалити послугу"),
                 ],
                 [
                     KeyboardButton(
                         text="✏️ Редагувати послугу"
                     ),  # Олівець для редагування
-                    KeyboardButton(text="📋 Доступні послуги"),  # Список
+                    KeyboardButton(text="📋 Доступні послуги"),
                 ],
-                [KeyboardButton(text="🔙 Назад")],  # Назад
+                [KeyboardButton(text="🔙 Назад")],
             ]
         )
 
@@ -106,13 +115,11 @@ class AdminReplyKeyboard(BaseReplyKeyboard):
         return self.create_reply_keyboard(
             keyboard=[
                 [
-                    KeyboardButton(text="📈 Кількість записів"),  # Графік зростання
-                    KeyboardButton(
-                        text="⭐️ Популярні послуги"
-                    ),  # Зірка для топ-записів
+                    KeyboardButton(text="📈 Кількість записів"),
+                    KeyboardButton(text="⭐️ Популярні послуги"),
                 ],
-                [KeyboardButton(text="💰 Дохід")],  # Гроші для доходу
-                [KeyboardButton(text="🔙 Назад")],  # Назад
+                [KeyboardButton(text="💰 Дохід")],
+                [KeyboardButton(text="🔙 Назад")],
             ]
         )
 
@@ -129,38 +136,4 @@ class AdminReplyKeyboard(BaseReplyKeyboard):
         )
 
 
-class AdminInlineKeyboard(BaseInlineKeyboard):
-
-    def main_inline_keyboard(
-        self, data: List[Dict], name: str, callback: str
-    ) -> InlineKeyboardMarkup:
-        keyboard = []
-        for date in data:
-            keyboard.append(
-                [
-                    InlineKeyboardButton(
-                        text=date.get(name), callback_data=f"{date.get(callback)}"
-                    )
-                ]
-            )
-        return self.create_inline_keyboard(keyboard=keyboard)
-
-    def description_or_google_link_or_confirm(self):
-        return self.create_inline_keyboard(
-            keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="Додати опис", callback_data="add_description"
-                    ),
-                    InlineKeyboardButton(
-                        text="Додати посилання",
-                        callback_data="add_google_link",
-                    ),
-                ],
-                [InlineKeyboardButton(text="Завершити", callback_data="confirm")],
-            ]
-        )
-
-
-inline_keyboard = AdminInlineKeyboard()
-reply_keyboard = AdminReplyKeyboard()
+admin_keyboard = AdminKeyboard()
