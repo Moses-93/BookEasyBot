@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientResponseError
 from core.dependencies import settings
 
 logger = logging.getLogger(__name__)
@@ -27,6 +27,11 @@ class APIClient:
                 text = await response.text()
                 if status >= 400:
                     logger.warning(f"status: {status}. message: {text}")
+                    raise ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=response.status,
+                    )
 
                 return status, data
 
