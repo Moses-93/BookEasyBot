@@ -27,9 +27,13 @@ class ErrorHandlingMiddleware(BaseMiddleware):
         except Exception as e:
             await self.handle_general_error(event, e)
 
-    async def handle_client_error(self, event: Message | CallbackQuery, error: ClientResponseError):
+    async def handle_client_error(
+        self, event: Message | CallbackQuery, error: ClientResponseError
+    ):
         message = ERROR_MESSAGES.get(error.status, ERROR_MESSAGES["default"])
         await send_response(event, message)
 
-    async def handle_general_error(self, event: Message | CallbackQuery, error: Exception):
+    async def handle_general_error(
+        self, event: Message | CallbackQuery, error: Exception
+    ):
         await send_response(event, ERROR_MESSAGES["default"])
