@@ -13,15 +13,7 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 
-@router.message(F.text == "Години")
-async def start(message: Message):
-    await message.answer(
-        text="Оберіть потрібну вам дію!", reply_markup=reply_keyboard.manage_times()
-    )
-    return
-
-
-@router.message(F.text == "Додати час")
+@router.message(F.text == "➕⏰ Додати час")
 async def start_add_time(message: Message, state: FSMContext):
     status, dates = await api_client.get(
         endpoint="/dates", chat_id=message.from_user.id

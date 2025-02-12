@@ -12,7 +12,15 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 
-@router.message(F.text == "Додати послугу")
+@router.message(F.text == "📖 Послуги")
+async def show_manage_services(message: Message):
+    await message.answer(
+        text="Ви перейли в розділ керування послугами!",
+        reply_markup=admin_keyboard.manage_services(),
+    )
+
+
+@router.message(F.text == "➕ Додати послугу")
 async def start_create_service(message: Message, state: FSMContext):
     await message.answer(text="Введіть назву послуги")
     await state.set_state(CreateServiceState.name)

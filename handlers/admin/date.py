@@ -13,16 +13,7 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 
-@router.message(F.text == "Дати")
-async def main_date(message: Message):
-    await message.answer(
-        text="Ви перейшли в панель керування датами!\nОберіть потрібну вам дію!",
-        reply_markup=reply_keyboard.manage_dates(),
-    )
-    return
-
-
-@router.message(F.text == "Видалити дату")
+@router.message(F.text == "❌📅 Видалити дату")
 async def delete_date(message: Message, state: FSMContext):
     user_id = message.from_user.id
     status, dates = await api_client.get(endpoint="/dates/", chat_id=user_id)
