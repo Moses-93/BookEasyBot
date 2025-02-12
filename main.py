@@ -26,7 +26,6 @@ from handlers.general import (
 
 from core.middleware import UserIDMiddleware, ErrorHandlingMiddleware
 from core.dependencies import settings
-from core.middleware import UserIDMiddleware
 
 os.environ["TZ"] = "Europe/Kyiv"
 
@@ -45,6 +44,9 @@ logger = logging.getLogger(__name__)
 bot = Bot(token=settings.telegram_main_token)
 dp = Dispatcher()
 dp.message.middleware(UserIDMiddleware())
+dp.callback_query.middleware(UserIDMiddleware())
+dp.message.middleware(ErrorHandlingMiddleware())
+dp.callback_query.middleware(ErrorHandlingMiddleware())
 
 
 async def main():
