@@ -1,7 +1,7 @@
 from typing import List, Dict, Callable, Optional
 from aiogram.types import KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 from .base_keyboard import BaseReplyKeyboard, BaseInlineKeyboard
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 from utils.formatted_view import sorted_data
 
 
@@ -38,7 +38,7 @@ class DynamicKeyboard(BaseInlineKeyboard, BaseReplyKeyboard):
             keyboard.append([InlineKeyboardButton(text=name, callback_data=callback)])
         return self.create_inline_keyboard(keyboard=keyboard)
 
-    def dynamic_reply_keyboard(self, button_names: List[str | int]):
+    def dynamic_reply_keyboard(self, button_names: List[str]):
         keyboard = []
         for name in button_names:
             keyboard.append([KeyboardButton(text=name)])
@@ -114,5 +114,25 @@ class DisplayDataKeyboard(BaseInlineKeyboard):
         )
 
 
+class ManageBooking:
+    def manage_bookings(self, is_master: bool = False):
+        keyboard = ReplyKeyboardBuilder()
+
+        keyboard.add(
+            KeyboardButton(text="📂 Активні записи"),
+            KeyboardButton(text="🗄️ Архів записів"),
+        )
+
+        if not is_master:
+            keyboard.add(KeyboardButton(text="❌ Скасувати запис"))
+
+        keyboard.add(KeyboardButton(text="⬅️ Назад"))
+
+        keyboard.adjust(2, 1 if is_master else 1, 1)
+
+        return keyboard.as_markup(resize_keyboard=True)
+
+
+manage_booking_keyboard = ManageBooking()
 display_data_keyboard = DisplayDataKeyboard()
 dynamic_keyboard = DynamicKeyboard()

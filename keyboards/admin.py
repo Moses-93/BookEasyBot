@@ -100,17 +100,6 @@ class AdminKeyboard(BaseReplyKeyboard):
             ]
         )
 
-    def manage_bookings(self):
-        return self.create_reply_keyboard(
-            keyboard=[
-                [
-                    KeyboardButton(text="📂 Активні записи"),
-                    KeyboardButton(text="🗄️ Архів записів"),
-                ],
-                [KeyboardButton(text="🔙 Назад")],
-            ]
-        )
-
     def manage_statistics(self):
         return self.create_reply_keyboard(
             keyboard=[
