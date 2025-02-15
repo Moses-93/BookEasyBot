@@ -8,5 +8,5 @@ class IdentifyRole:
     def generate_keyboard(user_role: str):
         if user_role == "master":
             return admin_keyboard.admin_main_menu()
-        elif user_role == "user":
+        elif user_role == "client":
             return user_keyboard.main_keyboard()
