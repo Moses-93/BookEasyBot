@@ -1,13 +1,10 @@
 import logging
-
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import CommandStart, BaseFilter
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiohttp import ClientResponseError
 
-from keyboards.admin import admin_keyboard
 from keyboards.general import dynamic_keyboard
 from keyboards.factory_method import IdentifyRole
 from services.api_client import api_client
