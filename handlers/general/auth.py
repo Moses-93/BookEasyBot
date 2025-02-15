@@ -31,12 +31,15 @@ class DeepLinkFilter(BaseFilter):
         self.prefix = prefix
 
     async def __call__(self, message: Message) -> bool:
-        if not message.text.startswith("/start "):
+        if not message.text or not message.text.startswith("/start"):
             return False
-        deep_link_param = (
-            message.text.split(" ", 1)[1] if len(message.text.split()) > 1 else None
-        )
-        return deep_link_param and deep_link_param.startswith(self.prefix)
+
+        parts = message.text.split(maxsplit=1)
+        if len(parts) < 2:
+            return False
+
+        deep_link_param = parts[1]
+        return deep_link_param.startswith(self.prefix)
 
 
 async def process_sign_up(
