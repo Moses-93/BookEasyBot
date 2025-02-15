@@ -116,11 +116,45 @@ class AdminKeyboard(BaseReplyKeyboard):
         return self.create_reply_keyboard(
             keyboard=[
                 [
-                    KeyboardButton(text="📜 Моя підписка"),  # Рулон паперу для статусу
-                    KeyboardButton(text="🔄 Оновити підписку"),  # Стрілки для оновлення
+                    KeyboardButton(text="💳 Отримати підписку"),
+                    KeyboardButton(text="🆓 Спробувати безкоштовно"),
                 ],
-                [KeyboardButton(text="❌ Скасувати підписку")],  # Хрестик для видалення
-                [KeyboardButton(text="🔙 Назад")],  # Назад
+                [
+                    KeyboardButton(text="📜 Моя підписка"),
+                    KeyboardButton(text="❌ Скасувати підписку"),
+                ],
+                [
+                    KeyboardButton(text="🔙 Назад"),
+                ],
+            ]
+        )
+
+    def manage_referrals(self):
+        return self.create_reply_keyboard(
+            keyboard=[
+                [
+                    KeyboardButton(text="📲 Посилання для клієнтів"),
+                    KeyboardButton(text="🤝 Запросити колегу"),
+                ],
+                [KeyboardButton(text="👥 Запрошені майстри")],
+                [KeyboardButton(text="🔙 Назад")],
+            ]
+        )
+
+    def manage_loyalty_program(self):
+        return self.create_reply_keyboard(
+            keyboard=[
+                [
+                    KeyboardButton(text="🛠 Створити промокод"),
+                    KeyboardButton(text="📜 Мої промокоди"),
+                ],
+                [
+                    KeyboardButton(text="⚙️ Налаштувати знижку"),
+                    KeyboardButton(text="📊 Статистика використання"),
+                ],
+                [
+                    KeyboardButton(text="🔙 Назад"),
+                ],
             ]
         )
 
