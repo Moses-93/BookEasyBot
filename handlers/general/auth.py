@@ -64,6 +64,20 @@ async def process_sign_up(
     await state.set_state(AuthState.phone_number)
 
 
+@router.message(CommandStart(deep_link=True), DeepLinkFilter(prefix="master"))
+async def start_sign_up(message: Message, state: FSMContext, user_id: int):
+    deep_link_param = message.text.split(maxsplit=1)[1]
+
+    try:
+        master_id = int(deep_link_param[len("master") :])
+        logger.info(f"master-id: {master_id}")
+    except (IndexError, ValueError):
+        await message.answer("Посилання має некоректний формат!")
+        return
+
+    await process_sign_up(message, state, user_id, master_id)
+
+
 @router.message(CommandStart())
 async def start(message: Message, user_id: int):
     try:
@@ -105,16 +119,5 @@ async def finish_sign_up(message: Message, state: FSMContext, user_id: int):
             text=MESSAGE[f"successful_register_{user["role"]}"].format(
                 name=user["name"]
             ),
-            reply_markup=admin_keyboard.admin_main_menu(),
+            reply_markup=IdentifyRole.generate_keyboard(user["role"]),
         )
-
-
-@router.message(CommandStart(deep_link=True), DeepLinkFilter(prefix="sign-up=master_"))
-async def start_sign_up(message: Message, state: FSMContext, user_id: int):
-    deep_link_param = message.text.split(" ", 1)[1]
-    try:
-        master_id = int(deep_link_param.split("_")[1])
-    except (IndexError, ValueError):
-        await message.answer("Посилання має некоректний формат!")
-        return
-    await process_sign_up(message, state, "user", user_id, master_id)
