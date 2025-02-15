@@ -43,7 +43,11 @@ class DeepLinkFilter(BaseFilter):
 
 
 async def process_sign_up(
-    message: Message, state: FSMContext, role: str, user_id: int, master_id: int = None
+    message: Message,
+    state: FSMContext,
+    user_id: int,
+    master_id: int = None,
+    role: str = "client",
 ):
     """Обробляє реєстрацію для користувача або майстра."""
     await state.update_data(
