@@ -5,6 +5,7 @@ from aiogram.types import Message
 from aiogram.filters import CommandStart, BaseFilter
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.fsm.context import FSMContext
+from aiohttp import ClientResponseError
 
 from keyboards.admin import admin_keyboard
 from keyboards.general import dynamic_keyboard
@@ -65,13 +66,17 @@ async def process_sign_up(
 
 @router.message(CommandStart())
 async def start(message: Message, user_id: int):
-    status, user = await api_client.get(endpoint="/users/", chat_id=user_id)
-    if status != 200:
-        await message.answer(
-            text=MESSAGE["info"],
-            reply_markup=dynamic_keyboard.dynamic_reply_keyboard(["✅ Стати майстром"]),
-        )
-        return
+    try:
+        status, user = await api_client.get(endpoint="/users/", chat_id=user_id)
+    except ClientResponseError as e:
+        if e.status == 401:
+            await message.answer(
+                text=MESSAGE["info"],
+                reply_markup=dynamic_keyboard.dynamic_reply_keyboard(
+                    ["✅ Стати майстром"]
+                ),
+            )
+            return
     await message.answer(
         text=MESSAGE[user["role"]].format(name=user["name"]),
         reply_markup=IdentifyRole.generate_keyboard(user["role"]),
