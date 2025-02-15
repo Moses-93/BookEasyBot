@@ -1,5 +1,6 @@
+from collections import defaultdict
 import logging
-from typing import List, Dict
+from typing import List, Dict, Union
 
 
 logger = logging.getLogger(__name__)
@@ -31,12 +32,20 @@ def format_date(data: List[Dict]):
     return formatted
 
 
-def format_time(data: List[Dict]):
-    """Форматування дат для відображення користувачу."""
+def format_time(times: List[Dict]) -> str:
 
-    formatted = f"⏰ *ДОСТУПНІ ГОДИНИ*\n\n"
-    for item in sorted_data(data):
-        formatted += f"*{item.get("time")}*\n" f"{'-' * 30}\n"
+    grouped_data = defaultdict(list)
+    for item in sorted(times, key=lambda x: x["date"]["date"]):
+        date = item["date"]["date"]
+        time = item["time"][:5]
+        grouped_data[date].append(time)
+
+    formatted = "⏰ *ДОСТУПНІ ГОДИНИ*\n\n"
+    for date, times in grouped_data.items():
+        formatted += f"📅 *{date}*\n"
+        formatted += "\n".join(f"⏱ {time}" for time in times) + "\n"
+        formatted += "➖" * 10 + "\n"
+
     return formatted
 
 
