@@ -101,23 +101,19 @@ async def start(message: Message, user_id: int):
     )
 
 
-router.message(F.text == "✅ Стати майстром")
-
-
-async def to_be_master(message: Message, state: FSMContext, user_id: int):
-    await state.set_state(AuthState.phone_number)
-
-    await process_sign_up(message, state, "master", user_id)
+@router.message(F.text == "✅ Стати майстром")
+async def become_master(message: Message, state: FSMContext, user_id: int):
+    logger.info("Starting registration master")
+    await process_sign_up(message, state, user_id, role="master")
 
 
 @router.message(AuthState.phone_number)
 async def finish_sign_up(message: Message, state: FSMContext, user_id: int):
     phone_number = message.contact.phone_number
     logger.info(f"Phone_number:{phone_number}")
-
     await state.update_data(phone=phone_number)
     data = await state.get_data()
-    status, user = await api_client.post(f"/users/", chat_id=user_id, json=data)
+    status, user = await api_client.post("/users/", chat_id=user_id, json=data)
     if status == 201:
         await message.answer(
             text=MESSAGE[f"successful_register_{user["role"]}"].format(
