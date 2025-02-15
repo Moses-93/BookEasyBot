@@ -32,7 +32,10 @@ class AdminKeyboard(BaseReplyKeyboard):
             keyboard=[
                 [
                     KeyboardButton(text="💳 Підписка"),
-                    KeyboardButton(text="🔗 Посилання клієнтам"),
+                    KeyboardButton(text="📤 Запрошення та посилання"),
+                ],
+                [
+                    KeyboardButton(text="🎁 Програма лояльності"),
                 ],
                 [KeyboardButton(text="🔙 Назад")],
             ]
