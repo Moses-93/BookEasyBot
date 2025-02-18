@@ -35,7 +35,7 @@ async def send_message(message: Message, text: str, reply_markup=None, parse_mod
 
 
 async def handle_api_response(
-    status: int, data, message: Message, success_message: str, error_message: str
+    status: int, data, message: Message, success_message: str
 ):
     if status == 200:
         await message.answer(success_message, reply_markup=data)
