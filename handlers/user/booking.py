@@ -1,14 +1,12 @@
-from datetime import datetime, timedelta
 import logging
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-
 from states.booking import BookingStates, CancelBook
-from keyboards.booking import booking_keyboard
-from keyboards.general import dynamic_keyboard, general_reply_keyboard
+from keyboards.general import display_data_keyboard
+from keyboards import general, user
 from services.api_client import api_client
-from utils.formatted_view import format_booking
+from utils.utils import calculate_reminder_time
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -87,10 +85,9 @@ async def select_master(callback: CallbackQuery, state: FSMContext):
     )
     await handle_api_response(
         status,
-        booking_keyboard.service_keyboard(services),
+        display_data_keyboard.service_keyboard(services),
         callback.message,
         MESSAGES["select_master_success"],
-        MESSAGES["select_master_error"],
     )
     await state.set_state(BookingStates.service)
     await callback.answer()
@@ -98,9 +95,6 @@ async def select_master(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(BookingStates.service)
 async def select_service(callback: CallbackQuery, state: FSMContext):
-    """
-    Обробка вибору послуги.
-    """
     data = await state.get_data()
     service_id, service = callback.data.split(":")
     master_id = data.get("master_id")
@@ -112,10 +106,9 @@ async def select_service(callback: CallbackQuery, state: FSMContext):
     )
     await handle_api_response(
         status,
-        booking_keyboard.date_keyboard(dates),
+        display_data_keyboard.date_keyboard(dates),
         callback.message,
         MESSAGES["select_service_success"],
-        MESSAGES["select_service_error"],
     )
     await state.set_state(BookingStates.date)
     await callback.answer()
@@ -123,9 +116,6 @@ async def select_service(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(BookingStates.date)
 async def select_date(callback: CallbackQuery, state: FSMContext):
-    """
-    Обробка вибору дати.
-    """
     date_id, date = callback.data.split(":")
     data = await state.get_data()
     master_id = data.get("master_id")
@@ -140,10 +130,9 @@ async def select_date(callback: CallbackQuery, state: FSMContext):
     )
     await handle_api_response(
         status,
-        booking_keyboard.time_keyboard(times),
+        display_data_keyboard.time_keyboard(times),
         callback.message,
         MESSAGES["select_date_success"],
-        MESSAGES["select_date_error"],
     )
     await state.set_state(BookingStates.time)
     await callback.answer()
@@ -151,81 +140,71 @@ async def select_date(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(BookingStates.time)
 async def select_time(callback: CallbackQuery, state: FSMContext):
-    """
-    Обробка введення часу та завершення збору даних.
-    """
-    logger.info(f"Callback:{callback.data}")
     time_id, time = callback.data.split(f":", 1)
-    await state.set_state(BookingStates.reminter_ofset)
+    await state.set_state(BookingStates.reminder_offset)
     await state.update_data(time_id=time_id, time=time)
-    await callback.message.answer(
-        "Супер! А тепер вкажіть за скільки годин ви б хотіли отримати нагадування, але, не більше чим за 23 години",
-        reply_markup=dynamic_keyboard.dynamic_inline_keyboard(
-            {"Не отримувати нагадування": "skip"}
+    await send_message(
+        callback.message,
+        MESSAGES["select_reminder_offset"],
+        reply_markup=general.dynamic_keyboard.dynamic_inline_keyboard(
+            {"Не отримувати нагадування": "skip_reminder"}
         ),
     )
     await callback.answer()
 
 
-@router.message(BookingStates.reminter_ofset)
+@router.message(BookingStates.reminder_offset)
 async def select_reminder_offset(message: Message, state: FSMContext):
     data = await state.get_data()
-    master_id = data.get("master_id")
-    if message.text != "skip":
-        try:
-            offset = int(message.text)
-        except ValueError:
-            await message.answer("Вкажіть ціле цисло. Спробуйте знову")
-        date, time = data.get("date"), data.get("time")
-        date_time = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M:%S")
-        reminder_time = date_time - timedelta(hours=offset)
-        await state.update_data(reminder_time=str(reminder_time))
-        data = await state.get_data()
-        logger.info(f"Data:{data}")
-
     try:
-        status, response_data = await api_client.post(
-            f"/bookings?master_id={master_id}" if master_id else "/bookings/",
-            message.from_user.id,
-            json=data,
+        offset = int(message.text)
+    except ValueError:
+        await send_message(message, "Вкажіть ціле число. Спробуйте знову")
+        return
+    reminder_time = calculate_reminder_time(data, offset)
+    await state.update_data(reminder_time=str(reminder_time))
+    await confirm_booking(message, state)
+
+
+@router.callback_query(F.data == "skip_reminder")
+async def skip_reminder(callback: CallbackQuery, state: FSMContext):
+    await confirm_booking(callback.message, state)
+
+
+@router.callback_query(F.data == "confirm_booking")
+async def create_booking(callback: CallbackQuery, state: FSMContext, user_id):
+    data = await state.get_data()
+    if not data:
+        await send_message(callback.message, MESSAGES["incomplete_booking_form"])
+        return
+    status, new_booking = await api_client.post("/bookings", user_id, json=data)
+    if status == 201:
+        await send_message(
+            callback,
+            MESSAGES["booking_success"].format(
+                service=new_booking["service"]["name"],
+                date=new_booking["date"]["date"],
+                time=new_booking["time"]["time"],
+            ),
         )
-        if status == 201:
-            await message.answer(MESSAGES["booking_success"])
-        elif status == 400:
-            await message.answer(MESSAGES["booking_error"])
-    except Exception as e:
-        await message.reply(f"Сталася помилка при створенні бронювання: {str(e)}")
-    finally:
-        await state.clear()
+    await state.clear()
 
 
-@router.callback_query(F.data == "cancel_book")
-async def start_cancel_book(callback: CallbackQuery, state: FSMContext):
-    status, bookings = await api_client.get(
-        "/bookings?active=True", chat_id=callback.from_user.id
+@router.callback_query(F.data == "cancel_process_booking")
+async def cancel_process_booking(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await send_message(
+        callback.message,
+        MESSAGES["cancel_process_booking"],
+        reply_markup=user.user_keyboard.main_keyboard(),
     )
-    if status == 200:
-        await callback.message.answer(
-            str(format_booking(bookings)), parse_mode="Markdown"
-        )
-        await callback.message.answer(
-            "Оберіть, який запис ви хочете скасувати",
-            reply_markup=booking_keyboard.cancel_booking(bookings),
-        )
-        await callback.answer()
-        await state.set_state(CancelBook.book)
-    else:
-        await callback.message.answer("Помилка")
 
 
 @router.callback_query(CancelBook.book)
 async def cancel_book(callback: CallbackQuery, state: FSMContext):
     book_id = callback.data
-    logger.info(f"Book_id: {book_id}")
     status, msg = await api_client.patch(
         f"/bookings/{book_id}", chat_id=callback.from_user.id
     )
     if status == 204:
-        await callback.message.answer("Ви успішно скасували свій запис")
-    else:
-        await callback.message.answer("Помилка")
+        await send_message(callback, MESSAGES["cancel_booking_success"])
