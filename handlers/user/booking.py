@@ -38,46 +38,43 @@ async def handle_api_response(
     status: int, data, message: Message, success_message: str
 ):
     if status == 200:
-        await message.answer(success_message, reply_markup=data)
-    elif status == 404:
-        await message.answer(
-            MESSAGES["no_services"]
-            if "services" in success_message
-            else MESSAGES["no_dates"]
-        )
-    else:
-        await message.answer(error_message)
+        await send_message(message, success_message, reply_markup=data)
 
 
-@router.message(F.text == "Записатись")
-async def start_booking(message: Message, state: FSMContext):
-    """
-    Початок процесу бронювання: вибір послуги.
-    """
-    try:
-        status, datas = await api_client.get("/services/", message.from_user.id)
-        if status == 200:
-            await message.answer(
-                MESSAGES["start_booking"],
-                reply_markup=booking_keyboard.service_keyboard(datas),
-            )
-            await state.set_state(BookingStates.service)
-        elif status == 409:
-            await message.answer(
-                MESSAGES["multiple_masters"],
-                reply_markup=booking_keyboard.choice_master(datas),
-            )
-            await state.set_state(BookingStates.master)
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        await message.reply(MESSAGES["error_services"])
+async def confirm_booking(message: Message, state: FSMContext):
+    data = await state.get_data()
+    keyboard = general.dynamic_keyboard.dynamic_inline_keyboard(
+        {"✅ Підтвердити": "confirm_booking", "❌ Скасувати": "cancel_process_booking"}
+    )
+    msg = MESSAGES["confirm_booking"].format(
+        service=data["service"], date=data["date"], time=data["time"]
+    )
+    await send_message(message, msg, reply_markup=keyboard, parse_mode="Markdown")
 
 
 @router.message(F.text == "Назад")
 async def back_to_main_menu(message: Message):
-    await message.answer(
-        text=MESSAGES["back_to_main"],
-        reply_markup=general_reply_keyboard.main_keyboard(),
+    await send_message(
+        message,
+        MESSAGES["back_to_main"],
+        reply_markup=user.user_keyboard.main_keyboard(),
+    )
+
+
+@router.message(F.text == "📝 Новий запис")
+async def start_booking(message: Message, state: FSMContext):
+    status, data = await api_client.get("/services/", message.from_user.id)
+    if status == 409:
+        await send_message(
+            message,
+            MESSAGES["multiple_masters"],
+            reply_markup=display_data_keyboard.choice_master(data),
+        )
+        await state.set_state(BookingStates.master)
+    await send_message(
+        message,
+        MESSAGES["start_booking"],
+        reply_markup=display_data_keyboard.service_keyboard(data),
     )
 
 
