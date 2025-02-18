@@ -74,6 +74,7 @@ async def start_booking(message: Message, state: FSMContext):
         MESSAGES["start_booking"],
         reply_markup=display_data_keyboard.service_keyboard(data),
     )
+    await state.set_state(BookingStates.service)
 
 
 @router.callback_query(BookingStates.master)
