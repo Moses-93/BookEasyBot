@@ -30,6 +30,10 @@ MESSAGES = {
 }
 
 
+async def send_message(message: Message, text: str, reply_markup=None, parse_mode=None):
+    await message.answer(text=text, reply_markup=reply_markup, parse_mode=parse_mode)
+
+
 async def handle_api_response(
     status: int, data, message: Message, success_message: str, error_message: str
 ):
