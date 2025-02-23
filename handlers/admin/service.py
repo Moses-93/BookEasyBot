@@ -5,7 +5,8 @@ from aiogram.fsm.context import FSMContext
 
 from services.api_client import api_client
 from states.service import CreateServiceState, UpdateServiceState, DeleteServiceState
-from keyboards.admin import inline_keyboard
+from keyboards.general import display_data_keyboard
+from keyboards.admin import admin_keyboard
 
 
 router = Router()
@@ -27,12 +28,12 @@ async def start_create_service(message: Message, state: FSMContext):
     return
 
 
-@router.message(F.text == "Видалити послугу")
+@router.message(F.text == "❌ Видалити послугу")
 async def start_delete_service(message: Message, state: FSMContext):
     services = await api_client.get(endpoint="/services/", chat_id=message.from_user.id)
-    keyboard = inline_keyboard.main(data=services, name="name", callback="id")
     await message.answer(
-        text="Оберіть послугу, яку ви бажаєте видалити:", reply_markup=keyboard
+        text="Оберіть послугу, яку ви бажаєте видалити:",
+        reply_markup=display_data_keyboard.service_keyboard(services),
     )
     await state.set_state(DeleteServiceState.service)
     return
@@ -41,9 +42,9 @@ async def start_delete_service(message: Message, state: FSMContext):
 @router.message(F.text == "Редагувати послугу")
 async def start_edit_service(message: Message, state: FSMContext):
     services = await api_client.get(endpoint="/services/", chat_id=message.from_user.id)
-    keyboard = inline_keyboard.main(data=services, name="name", callback="id")
     await message.answer(
-        text="Оберіть послугу, яку ви бажаєте редагувати:", reply_markup=keyboard
+        text="Оберіть послугу, яку ви бажаєте редагувати:",
+        reply_markup=display_data_keyboard.service_keyboard(services),
     )
     await state.set_state(UpdateServiceState.name)
     return
