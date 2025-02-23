@@ -25,14 +25,14 @@ class UserService:
 
     async def add_new_master(self, user_id, master_chat_id: int):
         status, user = await self.api_client.post(
-            "/users/masters/",
-            user_id,
-            json={"master_chat_id":master_chat_id}
-            )
+            "/users/masters/", user_id, json={"master_chat_id": master_chat_id}
+        )
         return status, user
 
     async def create_user(self, user_data: dict):
-        status, user = await self.api_client.post("/users/", user_data["chat_id"], json=user_data)
+        status, user = await self.api_client.post(
+            "/users/", user_data["chat_id"], json=user_data
+        )
         return user
 
 
