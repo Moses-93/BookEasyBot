@@ -2,7 +2,7 @@ import logging
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-from states.booking import BookingStates, CancelBook
+from states.booking import BookingStates, CancelBooking
 from keyboards.general import display_data_keyboard
 from keyboards import general, user
 from services.api_client import api_client
@@ -201,7 +201,7 @@ async def cancel_process_booking(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.callback_query(CancelBook.book)
+@router.callback_query(CancelBooking.booking)
 async def cancel_book(callback: CallbackQuery, state: FSMContext):
     book_id = callback.data
     status, msg = await api_client.patch(

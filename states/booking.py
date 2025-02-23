@@ -6,8 +6,8 @@ class BookingStates(StatesGroup):
     date = State()
     time = State()
     master = State()
-    reminter_ofset = State()
+    reminder_offset = State()
 
 
-class CancelBook(StatesGroup):
-    book = State()
+class CancelBooking(StatesGroup):
+    booking = State()
