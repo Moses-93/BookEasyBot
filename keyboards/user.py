@@ -27,17 +27,5 @@ class UserKeyboard(BaseReplyKeyboard):
             ]
         )
 
-    def manage_bookings(self):
-        return self.create_reply_keyboard(
-            keyboard=[
-                [
-                    KeyboardButton(text="📂 Активні записи"),
-                    KeyboardButton(text="🗄️ Архів записів"),
-                ],
-                [KeyboardButton(text="❌ Скасувати запис")],
-                [KeyboardButton(text="🔙 Назад")],
-            ]
-        )
-
 
 user_keyboard = UserKeyboard()
