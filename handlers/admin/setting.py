@@ -55,14 +55,6 @@ async def Invitations_and_links(message: Message):
     )
 
 
-@router.message(F.text == "💳 Підписка")
-async def subscriptions(message: Message):
-    await message.answer(
-        text=MESSAGE["subscriptions"],
-        reply_markup=admin_keyboard.manage_subscriptions(),
-    )
-
-
 @router.message(F.text == "🎁 Програма лояльності")
 async def loyalty_program(message: Message):
     await message.answer(
