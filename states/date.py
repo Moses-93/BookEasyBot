@@ -7,7 +7,7 @@ class DeleteDateState(StatesGroup):
 
 class CreateDateState(StatesGroup):
     date = State()
-    del_time = State()
+    deactivation_time = State()
 
 
 class ChoiceMasterDate(StatesGroup):

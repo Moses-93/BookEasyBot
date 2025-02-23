@@ -43,21 +43,21 @@ async def start_create_date(message: Message, state: FSMContext):
 async def add_date(message: Message, state: FSMContext):
     date = message.text
     await state.update_data(date=date)
-    await state.set_state(CreateDateState.del_time)
+    await state.set_state(CreateDateState.deactivation_time)
     await message.answer(
         text=f"Вкажіть в скільки годин дата повинна стати неактивною! Наприклад: якщо ви вкажете 17:00, {date} стане неактивною в {date} 17:00:00"
     )
 
 
-@router.message(CreateDateState.del_time)
+@router.message(CreateDateState.deactivation_time)
 async def create_date(message: Message, state: FSMContext):
     data = await state.get_data()
     date = data.get("date")
-    del_time = datetime.strptime(f"{date} {message.text}", "%Y-%m-%d %H:%M")
+    deactivation_time = datetime.strptime(f"{date} {message.text}", "%Y-%m-%d %H:%M")
     status, msg = await api_client.post(
         endpoint="/dates/",
         chat_id=message.from_user.id,
-        json={"date": date, "del_time": str(del_time)},
+        json={"date": date, "deactivation_time": str(deactivation_time)},
     )
     if status == 201:
         await message.answer(text="Дата успішно додана!")
