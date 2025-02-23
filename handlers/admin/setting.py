@@ -38,8 +38,7 @@ async def generate_link(message: Message):
     if status != 200 or not user:
         await message.answer(MESSAGE["error_create_link"])
         return
-    master_id = user["id"]
-    link = f"https://t.me/book_easy_bot?start=sign-up-master_{master_id}"
+    link = f"https://t.me/book_easy_bot?start=master-{user["chat_id"]}"
 
     await message.answer(
         text=MESSAGE["create_link_successfully"].format(link=link),
