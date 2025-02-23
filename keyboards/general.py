@@ -133,6 +133,16 @@ class ManageBooking:
         return keyboard.as_markup(resize_keyboard=True)
 
 
+class RequestContact(BaseReplyKeyboard):
+    def request_phone(self):
+
+        contact_button = KeyboardButton(
+            text="📞 Поділитися номером", request_contact=True
+        )
+        return self.create_reply_keyboard([[contact_button]])
+
+
+request_contact = RequestContact()
 manage_booking_keyboard = ManageBooking()
 display_data_keyboard = DisplayDataKeyboard()
 dynamic_keyboard = DynamicKeyboard()
