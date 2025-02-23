@@ -5,8 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 from services.api_client import api_client
 from states.time import CreateTimeStates, DeleteTimeStates
-from keyboards.booking import booking_keyboard
-from keyboards.admin import reply_keyboard, inline_keyboard
+from keyboards.general import display_data_keyboard
 
 
 router = Router()
@@ -21,7 +20,7 @@ async def start_add_time(message: Message, state: FSMContext):
     if status == 200:
         await message.answer(
             text="Оберіть дату, до якої ви бажаєте додати час!",
-            reply_markup=booking_keyboard.date_keyboard(dates),
+            reply_markup=display_data_keyboard.date_keyboard(dates),
         )
         await state.set_state(CreateTimeStates.date)
         return
@@ -43,7 +42,7 @@ async def start_delete_time(message: Message, state: FSMContext):
     dates = await api_client.get(endpoint="/dates", chat_id=message.from_user.id)
     await message.answer(
         text="Оберіть дату, в якій бажаєте видалити доступний час!",
-        reply_markup=booking_keyboard.date_keyboard(dates),
+        reply_markup=display_data_keyboard.date_keyboard(dates),
     )
     await state.set_state(DeleteTimeStates.date)
     return
@@ -52,7 +51,8 @@ async def start_delete_time(message: Message, state: FSMContext):
 @router.callback_query(CreateTimeStates.date)
 async def select_date(callback: CallbackQuery, state: FSMContext):
     await state.set_state(CreateTimeStates.time)
-    await state.update_data(date_id=callback.data)
+    date_id, date = callback.data.split(":")
+    await state.update_data(date_id=date_id, date=date)
     await callback.message.answer("Введіть час (у форматі HH:MM):")
     await callback.answer()
     return
