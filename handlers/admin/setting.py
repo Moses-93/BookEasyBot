@@ -5,8 +5,6 @@ from services.api_client import api_client
 from keyboards.admin import admin_keyboard
 from keyboards.general import dynamic_keyboard
 
-# from utils.formatted_view import format_referrals
-
 
 router = Router()
 
@@ -16,7 +14,6 @@ MESSAGE = {
     "Invitations_and_links": "Ви перейшли в розділ керування посиланнями та запрошеннями.\nТут ви можете запросити свого колегу, надати клієнтам посилання для запису та переглянути запрошених раніше майстрів!",
     "subscriptions": "Ви перейшли в розділ керування підпискою!Тут ви можете переглянути доступні плани, поточну підписку, оновити її або скасувати",
     "loyalty_program": "Ви перейшли в розділ для налаштування знижок клієнтам",
-    "invite_master": "За цим посиланням зможуть зареєструватись інші майстри, після чого вам та новому майстру будуть нараховані бонуси у вигляді продовження підписки!\n\n*{link}*",
     "create_link_successfully": "Надайте це посилання вашим клієнтам:\n\n`{link}`\n\nЗа ним вони зможуть здійснити запис саме до вас!",
     "error_create_link": "❌ Не вдалося згенерувати посилання. Спробуйте пізніше.",
 }
@@ -72,32 +69,3 @@ async def loyalty_program(message: Message):
         text=MESSAGE["loyalty_program"],
         reply_markup=admin_keyboard.manage_loyalty_program(),
     )
-
-
-@router.message(F.text == "🤝 Запросити колегу")
-async def invite_master(message: Message):
-    status, master_id = await api_client.get(
-        endpoint="/users/", chat_id=message.from_user.id
-    )
-
-    if status != 200 or not master_id:
-        await message.answer(MESSAGE["error_create_link"])
-        return
-
-    link = f"https://t.me/book_easy_bot?start=ref_master_{master_id}"
-    await message.answer(
-        text=MESSAGE["invite_master"],
-    )
-
-
-@router.message(F.text == "👥 Запрошені майстри")
-async def show_referrals(message: Message):
-    status, referrals = await api_client.get(
-        endpoint="/users/referrals/", chat_id=message.from_user.id
-    )
-    if status != 200:
-        await message.answer(text=MESSAGE["error"])
-        return
-    # await message.answer(
-    #     text=format_referrals(referrals)
-    # )
