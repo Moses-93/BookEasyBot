@@ -22,18 +22,16 @@ class APIClient:
             async with session.request(
                 method, url, headers=headers, **kwargs
             ) as response:
-                status = response.status
-                data = await response.json()
                 text = await response.text()
-                if status >= 400:
-                    logger.warning(f"status: {status}. message: {text}")
+                if response.status >= 400:
+                    logger.warning(f"status: {response.status}. message: {text}")
                     raise ClientResponseError(
                         request_info=response.request_info,
                         history=response.history,
                         status=response.status,
                     )
 
-                return status, data
+                return await response.json()
 
     async def get(
         self, endpoint: str, chat_id: int, params: dict = None
