@@ -7,9 +7,15 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
-def validate_price(price: str) -> bool:
-    if not isinstance(price, int) or price <= 0:
-        logger.warning(f"The user input invalid price: {price} | type: {type(price)}")
+def is_valid_price(price: str) -> bool:
+    try:
+        price_int = int(price)
+        if price_int <= 0:
+            logger.warning(
+                f"The user input invalid price: {price} | type: {type(price)}"
+            )
+            return False
+    except ValueError:
         return False
     return True
 
