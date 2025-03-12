@@ -1,15 +1,19 @@
 from datetime import datetime
 from aiogram.fsm.context import FSMContext
-from typing import Any, List, Dict, Optional
+from aiogram.types import InlineKeyboardMarkup
+from typing import Any, List, Dict, Tuple, Optional
 
 from keyboards.general import display_data_keyboard
+from keyboards.admin import AdminKeyboard
 from states.date import CreateDateState, DeleteDateState
 from utils.validators import is_valid_date, is_valid_time
 from ..api_client import APIClient
+from ..user import UserService
 from .base_schedule import BaseScheduleService
 
 
 MESSAGE = {
+    "start": "👋 Вітаю в розділі керування розкладом. Тут ви можете додавати, видаляти та переглядати ваші вільні дати та час!",
     "start_create_date": "Почнімо! 🚀 Введіть нову дату у форматі YYYY-MM-DD, і ми все налаштуємо!",
     "start_delete_date": "Окей! 📅 Оберіть дату, яку ви хочете видалити.",
     "add_deactivation_time": "Чудово! 🕒 Тепер вкажіть час, коли дата має автоматично видалитися. Наприклад, якщо ви введете 17:00, дата зникне {date} о 17:00:00.",
@@ -39,7 +43,12 @@ class DateService(BaseScheduleService):
 
 
 class DateManager:
-    def __init__(self, date_service: DateService):
+    def __init__(
+        self,
+        date_service: DateService,
+        user_service: UserService,
+        admin_keyboard: AdminKeyboard,
+    ):
         self.date_service = date_service
         self.user_service = user_service
         self.admin_keyboard = admin_keyboard
