@@ -14,7 +14,9 @@ class HandlerFactory:
         self.admin_keyboard = admin.AdminKeyboard()
 
     def create_date_router(self) -> date.DateCommandHandler:
-        date_manager = schedules.DateManager(self.date_service)
+        date_manager = schedules.DateManager(
+            self.date_service, self.user_service, self.admin_keyboard
+        )
         date_command_handler = date.DateCommandHandler(date_manager)
         return schedule_routers.DateRouter(date_command_handler)
 
