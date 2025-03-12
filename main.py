@@ -8,8 +8,6 @@ from aiogram import Bot, Dispatcher
 from handlers.user import booking, feedback
 from handlers.admin import (
     start as admin_start,
-    info,
-    main as m,
     setting,
     subscription,
 )
@@ -31,9 +29,10 @@ API_TOKEN = settings.api_token
 
 handler_factory = HandlerFactory(BASE_URL, API_TOKEN)
 
-admin_date_handler = handler_factory.create_date_admin_handler()
-admin_time_handler = handler_factory.create_time_admin_handler()
-service_router = handler_factory.service_router()
+date_router = handler_factory.create_date_router()
+time_router = handler_factory.create_time_router()
+service_router = handler_factory.create_service_router()
+business_info_router = handler_factory.create_business_info_router()
 
 os.environ["TZ"] = "Europe/Kyiv"
 
@@ -60,13 +59,12 @@ dp.callback_query.middleware(ErrorHandlingMiddleware())
 async def main():
     dp.include_router(booking.router)
     dp.include_router(user.router)
-    dp.include_router(admin_date_handler.router)
+    dp.include_router(date_router.router)
     dp.include_router(admin_start.router)
-    dp.include_router(admin_time_handler.router)
-    dp.include_router(info.router)
+    dp.include_router(time_router.router)
+    dp.include_router(business_info_router.router)
     dp.include_router(feedback.router)
     dp.include_router(service_router.router)
-    dp.include_router(m.router)
     dp.include_router(b.router)
     dp.include_router(setting.router)
     dp.include_router(time_and_date.router)
