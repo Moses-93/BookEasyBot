@@ -13,6 +13,7 @@ class DateRouter:
 
     def _register_handlers(self, handler: DateCommandHandler):
         """Реєстрація обробників."""
+        self.router.message.register(handler.start, F.text == "📅 Розклад")
         self.router.message.register(
             handler.start_create_date, F.text == "➕📅 Додати дату"
         )
