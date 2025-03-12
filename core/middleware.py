@@ -6,8 +6,13 @@ from core.constants.error_message import (
     GENERAL_ERROR_MESSAGES,
     SCHEDULE_ERROR_MESSAGES,
     SERVICE_ERROR_MESSAGE,
+    BUSINESS_INFO_ERROR_MESSAGE,
 )
-from core.exceptions import schedule_exception, service_exception
+from core.exceptions import (
+    schedule_exception,
+    service_exception,
+    business_info_exception as business_exc,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -37,8 +42,16 @@ class ErrorHandlingMiddleware(BaseMiddleware):
             await self.handle_client_error(event, e)
         except service_exception.ServiceHTTPError as e:
             await self.handle_service_error(event, e)
+        except business_exc.BusinessInfoHTTPError as e:
+            await self.handle_business_info_error(event, e)
         # except Exception as e:
         #     await self.handle_general_error(event, e)
+
+    async def handle_business_info_error(
+        self, event: Message | CallbackQuery, error: business_exc.BusinessInfoHTTPError
+    ):
+        message = BUSINESS_INFO_ERROR_MESSAGE.get(error.status)
+        await send_response(event, message)
 
     async def handle_service_error(
         self, event: Message | CallbackQuery, error: service_exception.ServiceHTTPError
