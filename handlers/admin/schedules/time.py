@@ -9,30 +9,12 @@ from services.schedules.time_service import TimeManager
 
 
 logger = logging.getLogger(__name__)
-router = Router()
 
 
-class CommandHandler:
-    def __init__(self, time_manager: TimeManager, router: Router):
+class TimeCommandHandler:
+    def __init__(self, time_manager: TimeManager):
         self.time_manager = time_manager
-        self.router = router
-        self._register_handlers()
-
-    def _register_handlers(self):
-        self.router.message.register(
-            self.start_create_time, F.text == "➕⏰ Додати час"
-        )
-        self.router.message.register(
-            self.start_delete_time, F.text == "❌⏰ Видалити час"
-        )
-        self.router.callback_query.register(self.add_time, CreateTimeStates.date)
-        self.router.message.register(self.finish_create_time, CreateTimeStates.time)
-        self.router.callback_query.register(
-            self.select_time_to_delete, DeleteTimeStates.date
-        )
-        self.router.callback_query.register(
-            self.finish_delete_time, DeleteTimeStates.time
-        )
+        self.router = Router()
 
     async def start_create_time(
         self, message: Message, state: FSMContext, user_id: int
@@ -74,7 +56,3 @@ class CommandHandler:
         time_id, _ = callback.data.split(":", 1)
         msg = await self.time_manager.finish_delete_time(state, user_id, time_id)
         await callback.message.answer(text=msg)
-
-
-def setup_time_handlers(router: Router, time_manager: TimeManager):
-    CommandHandler(time_manager, router)

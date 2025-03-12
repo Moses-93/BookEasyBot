@@ -1,6 +1,6 @@
 from services import api_client, schedules, services, user as user_service
 from keyboards import admin, general, user
-from .admin.schedules import date, time
+from .admin.schedules import schedule_routers, date, time
 from .admin.services import service_handlers, service_router
 
 
@@ -13,16 +13,18 @@ class HandlerFactory:
         self.user_service = user_service.UserService(self.api_client)
         self.admin_keyboard = admin.AdminKeyboard()
 
-    def create_date_admin_handler(self) -> date.DateCommandHandler:
+    def create_date_router(self) -> date.DateCommandHandler:
         date_manager = schedules.DateManager(self.date_service)
-        return date.DateCommandHandler(date_manager)
+        date_command_handler = date.DateCommandHandler(date_manager)
+        return schedule_routers.DateRouter(date_command_handler)
 
-    def create_time_admin_handler(self) -> time.TimeCommandHandler:
+    def create_time_router(self) -> time.TimeCommandHandler:
         time_service = schedules.TimeService(self.api_client)
         time_manager = schedules.TimeManager(time_service, self.date_service)
-        return time.TimeCommandHandler(time_manager)
+        time_command_handler = time.TimeCommandHandler(time_manager)
+        return schedule_routers.TimeRouter(time_command_handler)
 
-    def service_router(self) -> service_router.ServiceRouter:
+    def create_service_router(self) -> service_router.ServiceRouter:
         service_query = services.ServiceQuery(self.api_client)
         service_create_manager = services.ServiceCreateManager(service_query)
         service_edit_manager = services.ServiceEditManager(
