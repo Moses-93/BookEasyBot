@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardMarkup
 from typing import Any, List, Dict, Tuple, Optional
 
-from keyboards.general import display_data_keyboard
+from keyboards.general import DisplayDataKeyboard
 from keyboards.admin import AdminKeyboard
 from states.date import CreateDateState, DeleteDateState
 from utils.validators import is_valid_date, is_valid_time
@@ -48,10 +48,12 @@ class DateManager:
         date_service: DateService,
         user_service: UserService,
         admin_keyboard: AdminKeyboard,
+        display_data_keyboard: DisplayDataKeyboard,
     ):
         self.date_service = date_service
         self.user_service = user_service
         self.admin_keyboard = admin_keyboard
+        self.display_data_keyboard = display_data_keyboard
 
     async def start(self, user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
         await self.user_service.get_user(user_id)
@@ -85,7 +87,9 @@ class DateManager:
     async def start_delete_date(self, state: FSMContext, user_id: int):
         dates = await self.date_service.get_dates(user_id)
         await state.set_state(DeleteDateState.date)
-        return MESSAGE["start_delete_date"], display_data_keyboard.date_keyboard(dates)
+        return MESSAGE["start_delete_date"], self.display_data_keyboard.date_keyboard(
+            dates
+        )
 
     async def finish_delete_date(self, state: FSMContext, user_id: int, date_id: int):
         await self.date_service.deactivate_date(user_id, date_id)
