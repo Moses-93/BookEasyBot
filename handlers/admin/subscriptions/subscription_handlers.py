@@ -1,0 +1,2 @@
+class SubscriptionCommandHandler:
+    pass
