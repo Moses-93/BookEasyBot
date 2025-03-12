@@ -1,5 +1,4 @@
 import logging
-from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
@@ -12,7 +11,10 @@ logger = logging.getLogger(__name__)
 class DateCommandHandler:
     def __init__(self, date_manager: DateManager):
         self.date_manager = date_manager
-        self.router = Router()
+
+    async def start(self, message: Message, user_id: int):
+        msg, keyboard = await self.date_manager.start(user_id)
+        await message.answer(text=msg, reply_markup=keyboard)
 
     async def start_create_date(self, message: Message, state: FSMContext):
         msg = await self.date_manager.start_create_date(state)
@@ -23,9 +25,6 @@ class DateCommandHandler:
     ):
         logger.info("Starting delete date")
         msg, keyboard = await self.date_manager.start_delete_date(state, user_id)
-        logger.info(
-            f"msg: {msg} | type: {type(msg)} keyboard: {keyboard} | type: {type(keyboard)}"
-        )
         await message.answer(text=msg, reply_markup=keyboard)
 
     async def add_deactivate_time(self, message: Message, state: FSMContext):
