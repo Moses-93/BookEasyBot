@@ -1,9 +1,6 @@
 import logging
-from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-
-from states.time import CreateTimeStates, DeleteTimeStates
 
 from services.schedules.time_service import TimeManager
 
@@ -14,7 +11,6 @@ logger = logging.getLogger(__name__)
 class TimeCommandHandler:
     def __init__(self, time_manager: TimeManager):
         self.time_manager = time_manager
-        self.router = Router()
 
     async def start_create_time(
         self, message: Message, state: FSMContext, user_id: int
