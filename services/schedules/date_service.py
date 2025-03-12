@@ -41,6 +41,12 @@ class DateService(BaseScheduleService):
 class DateManager:
     def __init__(self, date_service: DateService):
         self.date_service = date_service
+        self.user_service = user_service
+        self.admin_keyboard = admin_keyboard
+
+    async def start(self, user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
+        await self.user_service.get_user(user_id)
+        return MESSAGE["start"], self.admin_keyboard.manage_schedule()
 
     async def start_create_date(self, state: FSMContext):
         await state.set_state(CreateDateState.date)
