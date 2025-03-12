@@ -1,7 +1,14 @@
-from services import api_client, schedules, services, user as user_service
+from services import (
+    api_client,
+    schedules,
+    services,
+    user as user_service,
+    business_info,
+)
 from keyboards import admin, general, user
 from .admin.schedules import schedule_routers, date, time
 from .admin.services import service_handlers, service_router
+from .admin.business_info import business_info_handlers, business_info_router
 
 
 class HandlerFactory:
@@ -49,3 +56,19 @@ class HandlerFactory:
             service_manager
         )
         return service_router.ServiceRouter(service_command_handler)
+
+    def create_business_info_router(self) -> business_info_router.BusinessInfoRouter:
+        business_info_service = business_info.BusinessInfoService(self.api_client)
+        create_manager = business_info.BusinessInfoCreateManager(business_info_service)
+        update_manager = business_info.BusinessInfoUpdateManager(business_info_service)
+        business_info_manager = business_info.BusinessInfoManager(
+            create_manager,
+            update_manager,
+            business_info_service,
+            self.user_service,
+            self.admin_keyboard,
+        )
+        business_info_command_handler = (
+            business_info_handlers.BusinessInfoCommandHandler(business_info_manager)
+        )
+        return business_info_router.BusinessInfoRouter(business_info_command_handler)
