@@ -20,7 +20,7 @@ class HandlerFactory:
         self.user_service = user_service.UserService(self.api_client)
         self.admin_keyboard = admin.AdminKeyboard()
 
-    def create_date_router(self) -> date.DateCommandHandler:
+    def create_date_router(self) -> schedule_routers.DateRouter:
         date_manager = schedules.DateManager(
             self.date_service,
             self.user_service,
@@ -30,7 +30,7 @@ class HandlerFactory:
         date_command_handler = date.DateCommandHandler(date_manager)
         return schedule_routers.DateRouter(date_command_handler)
 
-    def create_time_router(self) -> time.TimeCommandHandler:
+    def create_time_router(self) -> schedule_routers.TimeRouter:
         time_service = schedules.TimeService(self.api_client)
         time_manager = schedules.TimeManager(time_service, self.date_service)
         time_command_handler = time.TimeCommandHandler(time_manager)
