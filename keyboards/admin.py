@@ -18,7 +18,7 @@ class AdminKeyboard(BaseReplyKeyboard):
                     KeyboardButton(text="📅 Розклад"),
                 ],
                 [
-                    KeyboardButton(text="📖 Контакти"),
+                    KeyboardButton(text="📔 Контакти"),
                     KeyboardButton(text="📊 Аналітика"),
                     KeyboardButton(text="⭐️ Відгуки"),
                 ],
@@ -67,12 +67,10 @@ class AdminKeyboard(BaseReplyKeyboard):
             keyboard=[
                 [
                     KeyboardButton(text="➕ Додати послугу"),
-                    KeyboardButton(text="➖ Видалити послугу"),
+                    KeyboardButton(text="❌ Видалити послугу"),
                 ],
                 [
-                    KeyboardButton(
-                        text="✏️ Редагувати послугу"
-                    ),  # Олівець для редагування
+                    KeyboardButton(text="🔄 Оновити послугу"),
                     KeyboardButton(text="📋 Доступні послуги"),
                 ],
                 [KeyboardButton(text="🔙 Назад")],
@@ -134,7 +132,7 @@ class AdminKeyboard(BaseReplyKeyboard):
             if is_subscription_expiring:
                 keyboard.add(KeyboardButton(text="🔄 Оновити підписку"))
 
-        keyboard.add(KeyboardButton(text="💳 Доступні підписки"))
+        keyboard.add(KeyboardButton(text="💳 Придбати підписку"))
 
         keyboard.adjust(2)
 
