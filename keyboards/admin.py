@@ -77,18 +77,6 @@ class AdminKeyboard(BaseReplyKeyboard):
             ]
         )
 
-    # def manage_admins(self) -> ReplyKeyboardMarkup:
-    #     return self.create_reply_keyboard(
-    #         button_names=[
-    #             [
-    #                 KeyboardButton(text="Призначити адміністратора"),
-    #                 KeyboardButton(text="Видалити адміністратора"),
-    #             ],
-    #             [KeyboardButton(text="Список адміністраторів")],
-    #             [KeyboardButton(text="Назад")],
-    #         ]
-    #     )
-
     def manage_contacts(self) -> ReplyKeyboardMarkup:
         return self.create_reply_keyboard(
             keyboard=[
