@@ -9,7 +9,6 @@ from handlers.user import booking, feedback
 from handlers.admin import (
     start as admin_start,
     setting,
-    subscription,
 )
 from handlers.general import (
     booking as b,
@@ -33,6 +32,7 @@ date_router = handler_factory.create_date_router()
 time_router = handler_factory.create_time_router()
 service_router = handler_factory.create_service_router()
 business_info_router = handler_factory.create_business_info_router()
+subscription_router = handler_factory.create_subscription_router()
 
 os.environ["TZ"] = "Europe/Kyiv"
 
@@ -70,7 +70,7 @@ async def main():
     dp.include_router(time_and_date.router)
     dp.include_router(business_info.router)
     dp.include_router(s.router)
-    dp.include_router(subscription.router)
+    dp.include_router(subscription_router.router)
 
     await dp.start_polling(bot)
 
