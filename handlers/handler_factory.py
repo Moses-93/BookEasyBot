@@ -30,23 +30,23 @@ class HandlerFactory:
         self.user_service = user_service.UserService(self.api_client)
         self.admin_keyboard = admin.AdminKeyboard()
 
-    def create_date_router(self) -> schedule_routers.DateRouter:
+    def create_date_router(self) -> DateRouter:
         date_manager = schedules.DateManager(
             self.date_service,
             self.user_service,
             self.admin_keyboard,
             self.display_data_keyboard,
         )
-        date_command_handler = date.DateCommandHandler(date_manager)
-        return schedule_routers.DateRouter(date_command_handler)
+        date_command_handler = DateCommandHandler(date_manager)
+        return DateRouter(date_command_handler)
 
-    def create_time_router(self) -> schedule_routers.TimeRouter:
+    def create_time_router(self) -> TimeRouter:
         time_service = schedules.TimeService(self.api_client)
         time_manager = schedules.TimeManager(time_service, self.date_service)
-        time_command_handler = time.TimeCommandHandler(time_manager)
-        return schedule_routers.TimeRouter(time_command_handler)
+        time_command_handler = TimeCommandHandler(time_manager)
+        return TimeRouter(time_command_handler)
 
-    def create_service_router(self) -> service_router.ServiceRouter:
+    def create_service_router(self) -> ServiceRouter:
         service_query = services.ServiceQuery(self.api_client)
         service_create_manager = services.ServiceCreateManager(service_query)
         service_edit_manager = services.ServiceEditManager(
@@ -62,12 +62,10 @@ class HandlerFactory:
             service_deactivate_manager,
             service_edit_manager,
         )
-        service_command_handler = service_handlers.ServiceCommandHandler(
-            service_manager
-        )
-        return service_router.ServiceRouter(service_command_handler)
+        service_command_handler = ServiceCommandHandler(service_manager)
+        return ServiceRouter(service_command_handler)
 
-    def create_business_info_router(self) -> business_info_router.BusinessInfoRouter:
+    def create_business_info_router(self) -> BusinessInfoRouter:
         business_info_service = business_info.BusinessInfoService(self.api_client)
         create_manager = business_info.BusinessInfoCreateManager(business_info_service)
         update_manager = business_info.BusinessInfoUpdateManager(business_info_service)
