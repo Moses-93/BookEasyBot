@@ -4,6 +4,7 @@ from services import (
     services,
     user as user_service,
     business_info,
+    subscriptions,
 )
 from keyboards import admin, general, user
 from handlers.admin import (
@@ -77,7 +78,15 @@ class HandlerFactory:
             self.user_service,
             self.admin_keyboard,
         )
-        business_info_command_handler = (
-            business_info_handlers.BusinessInfoCommandHandler(business_info_manager)
+        business_info_command_handler = BusinessInfoCommandHandler(
+            business_info_manager
         )
-        return business_info_router.BusinessInfoRouter(business_info_command_handler)
+        return BusinessInfoRouter(business_info_command_handler)
+
+    def create_subscription_router(self):
+        subscription_service = subscriptions.SubscriptionService(self.api_client)
+        subscription_manager = subscriptions.SubscriptionManager(
+            subscription_service, self.user_service, self.admin_keyboard
+        )
+        subscription_command_handler = SubscriptionCommandHandler(subscription_manager)
+        return SubscriptionRouter(subscription_command_handler)
