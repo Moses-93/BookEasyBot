@@ -105,8 +105,8 @@ class AdminKeyboard(BaseReplyKeyboard):
 
     def manage_subscriptions(
         self,
-        has_active_subscription: bool = True,
-        is_subscription_expiring: bool = True,
+        has_active_subscription: bool,
+        is_subscription_expiring: bool,
     ):
         keyboard = ReplyKeyboardBuilder()
 
