@@ -5,6 +5,7 @@ from services import (
     user as user_service,
     business_info,
     subscriptions,
+    invites,
 )
 from keyboards import admin, general, user
 from handlers.admin import (
@@ -18,6 +19,8 @@ from handlers.admin import (
     BusinessInfoRouter,
     SubscriptionCommandHandler,
     SubscriptionRouter,
+    InviteCommandHandler,
+    InviteRouter,
 )
 
 
@@ -88,3 +91,11 @@ class HandlerFactory:
         )
         subscription_command_handler = SubscriptionCommandHandler(subscription_manager)
         return SubscriptionRouter(subscription_command_handler)
+
+    def create_invite_router(self):
+        invite_service = invites.InviteService(self.api_client)
+        invite_manager = invites.InviteManager(
+            invite_service, self.user_service, self.admin_keyboard
+        )
+        invite_command_handler = InviteCommandHandler(invite_manager)
+        return InviteRouter(invite_command_handler)
