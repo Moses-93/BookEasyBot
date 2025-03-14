@@ -6,9 +6,18 @@ from services import (
     business_info,
 )
 from keyboards import admin, general, user
-from .admin.schedules import schedule_routers, date, time
-from .admin.services import service_handlers, service_router
-from .admin.business_info import business_info_handlers, business_info_router
+from handlers.admin import (
+    DateCommandHandler,
+    DateRouter,
+    TimeCommandHandler,
+    TimeRouter,
+    ServiceCommandHandler,
+    ServiceRouter,
+    BusinessInfoCommandHandler,
+    BusinessInfoRouter,
+    SubscriptionCommandHandler,
+    SubscriptionRouter,
+)
 
 
 class HandlerFactory:
