@@ -17,7 +17,3 @@ class InviteCommandHandler:
     async def invite_to_client(self, message: Message, user_id: int):
         msg = await self.invite_manager.create_invite_to_client(user_id)
         await message.answer(text=msg, parse_mode="Markdown")
-
-    async def back_button(self, message: Message, state: FSMContext):
-        msg, keyboard = await self.invite_manager.back_button(state)
-        await message.answer(text=msg, reply_markup=keyboard)
