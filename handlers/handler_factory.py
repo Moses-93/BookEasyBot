@@ -40,7 +40,7 @@ class HandlerFactory:
         date_manager = schedules.DateManager(
             self.date_service,
             self.user_service,
-            self.navigation,
+            self.admin_keyboard,
             self.display_data_keyboard,
         )
         date_command_handler = DateCommandHandler(date_manager)
@@ -63,7 +63,7 @@ class HandlerFactory:
         )
         service_manager = services.ServiceManager(
             self.user_service,
-            self.navigation,
+            self.admin_keyboard,
             service_create_manager,
             service_deactivate_manager,
             service_edit_manager,
@@ -80,7 +80,7 @@ class HandlerFactory:
             update_manager,
             business_info_service,
             self.user_service,
-            self.navigation,
+            self.admin_keyboard,
         )
         business_info_command_handler = BusinessInfoCommandHandler(
             business_info_manager
@@ -90,7 +90,7 @@ class HandlerFactory:
     def create_subscription_router(self):
         subscription_service = subscriptions.SubscriptionService(self.api_client)
         subscription_manager = subscriptions.SubscriptionManager(
-            subscription_service, self.user_service, self.navigation
+            subscription_service, self.user_service, self.admin_keyboard
         )
         subscription_command_handler = SubscriptionCommandHandler(subscription_manager)
         return SubscriptionRouter(subscription_command_handler)
@@ -98,7 +98,7 @@ class HandlerFactory:
     def create_invite_router(self):
         invite_service = invites.InviteService(self.api_client)
         invite_manager = invites.InviteManager(
-            invite_service, self.user_service, self.navigation
+            invite_service, self.user_service, self.admin_keyboard
         )
         invite_command_handler = InviteCommandHandler(invite_manager)
         return InviteRouter(invite_command_handler)
