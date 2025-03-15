@@ -6,6 +6,7 @@ from services import (
     business_info,
     subscriptions,
     invites,
+    navigation,
 )
 from keyboards import admin, general, user
 from handlers.admin import (
@@ -32,12 +33,13 @@ class HandlerFactory:
         self.display_data_keyboard = general.DisplayDataKeyboard()
         self.user_service = user_service.UserService(self.api_client)
         self.admin_keyboard = admin.AdminKeyboard()
+        self.navigation = navigation.NavigationManager(self.admin_keyboard)
 
     def create_date_router(self) -> DateRouter:
         date_manager = schedules.DateManager(
             self.date_service,
             self.user_service,
-            self.admin_keyboard,
+            self.navigation,
             self.display_data_keyboard,
         )
         date_command_handler = DateCommandHandler(date_manager)
@@ -60,7 +62,7 @@ class HandlerFactory:
         )
         service_manager = services.ServiceManager(
             self.user_service,
-            self.admin_keyboard,
+            self.navigation,
             service_create_manager,
             service_deactivate_manager,
             service_edit_manager,
@@ -77,7 +79,7 @@ class HandlerFactory:
             update_manager,
             business_info_service,
             self.user_service,
-            self.admin_keyboard,
+            self.navigation,
         )
         business_info_command_handler = BusinessInfoCommandHandler(
             business_info_manager
@@ -87,7 +89,7 @@ class HandlerFactory:
     def create_subscription_router(self):
         subscription_service = subscriptions.SubscriptionService(self.api_client)
         subscription_manager = subscriptions.SubscriptionManager(
-            subscription_service, self.user_service, self.admin_keyboard
+            subscription_service, self.user_service, self.navigation
         )
         subscription_command_handler = SubscriptionCommandHandler(subscription_manager)
         return SubscriptionRouter(subscription_command_handler)
@@ -95,7 +97,7 @@ class HandlerFactory:
     def create_invite_router(self):
         invite_service = invites.InviteService(self.api_client)
         invite_manager = invites.InviteManager(
-            invite_service, self.user_service, self.admin_keyboard
+            invite_service, self.user_service, self.navigation
         )
         invite_command_handler = InviteCommandHandler(invite_manager)
         return InviteRouter(invite_command_handler)
