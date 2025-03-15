@@ -8,7 +8,7 @@ from services import (
     invites,
     navigation,
 )
-from keyboards import admin, general, user
+from keyboards import admin, general, user, buttons
 from handlers.admin import (
     DateCommandHandler,
     DateRouter,
@@ -23,6 +23,7 @@ from handlers.admin import (
     InviteCommandHandler,
     InviteRouter,
 )
+from handlers.general import NavigationCommandHandler, NavigationRouter
 
 
 class HandlerFactory:
@@ -101,3 +102,11 @@ class HandlerFactory:
         )
         invite_command_handler = InviteCommandHandler(invite_manager)
         return InviteRouter(invite_command_handler)
+
+    def create_navigation_router(self):
+        navigation_command_handler = NavigationCommandHandler(
+            self.navigation, buttons.SECTIONS
+        )
+        return NavigationRouter(
+            navigation_command_handler, sections=list(buttons.SECTIONS.keys())
+        )
