@@ -6,12 +6,7 @@ import logging
 from aiogram import Bot, Dispatcher
 
 from handlers.user import booking, feedback
-from handlers.admin import (
-    start as admin_start,
-    setting,
-)
 from handlers.general import (
-    booking as b,
     time_and_date,
     business_info,
     service as s,
@@ -60,13 +55,11 @@ async def main():
     dp.include_router(booking.router)
     dp.include_router(user.router)
     dp.include_router(date_router.router)
-    dp.include_router(admin_start.router)
     dp.include_router(time_router.router)
     dp.include_router(business_info_router.router)
     dp.include_router(feedback.router)
     dp.include_router(service_router.router)
-    dp.include_router(b.router)
-    dp.include_router(setting.router)
+    dp.include_router(invite_router.router)
     dp.include_router(time_and_date.router)
     dp.include_router(business_info.router)
     dp.include_router(s.router)
