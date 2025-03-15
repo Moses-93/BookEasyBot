@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class UserKeyboard(BaseReplyKeyboard):
 
-    def main_keyboard(self):
+    def main_menu(self):
         return self.create_reply_keyboard(
             keyboard=[
                 [

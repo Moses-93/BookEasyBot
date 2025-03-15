@@ -9,7 +9,7 @@ from .base_keyboard import BaseReplyKeyboard
 
 class AdminKeyboard(BaseReplyKeyboard):
 
-    def admin_main_menu(self) -> ReplyKeyboardMarkup:
+    def main_menu(self) -> ReplyKeyboardMarkup:
         return self.create_reply_keyboard(
             keyboard=[
                 [
