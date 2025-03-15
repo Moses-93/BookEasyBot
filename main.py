@@ -28,6 +28,8 @@ time_router = handler_factory.create_time_router()
 service_router = handler_factory.create_service_router()
 business_info_router = handler_factory.create_business_info_router()
 subscription_router = handler_factory.create_subscription_router()
+invite_router = handler_factory.create_invite_router()
+navigation_router = handler_factory.create_navigation_router()
 
 os.environ["TZ"] = "Europe/Kyiv"
 
@@ -64,6 +66,7 @@ async def main():
     dp.include_router(business_info.router)
     dp.include_router(s.router)
     dp.include_router(subscription_router.router)
+    dp.include_router(navigation_router.router)
 
     await dp.start_polling(bot)
 
